@@ -1,0 +1,15 @@
+Victorious ANDRAX
+Copyright 2026 Victorious93
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This is an independent launcher/installer for the ANDRAX-NG environment.
+It is not affiliated with or endorsed by SNAKE Security or The Cracker Technology.
+
+Credits:
+- ANDRAX: original project by Weidsom Nascimento / The Cracker Technology.
+- ANDRAX-NG: SNAKE Security (https://github.com/snakesec).
+- afos-ng: SNAKE Security, licensed under the Apache License, Version 2.0
+  (https://github.com/snakesec/afos-ng).
+
+No upstream source files are included in this repository. See THIRD_PARTY.md.
