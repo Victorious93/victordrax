@@ -36,17 +36,6 @@
             </intent-filter>
         </activity>
 
-        <!-- VictorSuite drawer plugin entry (proposed contract, see docs/victorsuite-integration.md) -->
-        <activity android:name=".PluginEntryActivity" android:exported="true"
-            android:label="@string/app_name" android:icon="@mipmap/ic_launcher"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar">
-            <intent-filter>
-                <action android:name="com.termux.victor.action.PLUGIN_ENTRY" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <meta-data android:name="com.termux.victor.plugin.manifest" android:resource="@raw/victor_plugin" />
-            <meta-data android:name="com.termux.victor.plugin.id" android:value="com.victorious.andrax" />
-        </activity>
 
         <service android:name="androidx.work.impl.foreground.SystemForegroundService"
             android:foregroundServiceType="dataSync" android:exported="false" />
