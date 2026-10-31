@@ -13,3 +13,8 @@ This repository contains only original code. No upstream files are copied.
 - AndroidX / Jetpack Compose, Navigation Compose — Apache-2.0
 - Kotlin — Apache-2.0
 - Gradle wrapper — Apache-2.0
+
+## VictorSuite (separate app, not bundled)
+
+- https://github.com/Victorious93/VictorSuite is a Termux-based terminal app. This app only sends it Android intents
+  (`com.termux.RUN_COMMAND`). No VictorSuite or Termux source or binaries are included here.

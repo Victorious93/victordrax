@@ -39,3 +39,11 @@ Not affiliated with SNAKE Security. Upstream files are linked, not copied — se
 
 ## License
 Our code is released under the **Apache License 2.0** (same as afos-ng). See [LICENSE](LICENSE).
+
+## Terminal: VictorSuite
+
+This app has no built-in terminal. "Open terminal" and every tool launch open a session in
+[VictorSuite](https://github.com/Victorious93/VictorSuite) through its Termux-compatible `RUN_COMMAND` intent.
+When the ANDRAX-NG chroot is installed, the session enters it. If VictorSuite has not allowed external apps, this
+app opens VictorSuite and copies the command to the clipboard instead. The app also exposes a proposed plugin entry so
+VictorSuite's drawer can list it. See [docs/victorsuite-integration.md](docs/victorsuite-integration.md).
