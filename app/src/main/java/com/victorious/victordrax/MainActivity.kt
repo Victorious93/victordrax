@@ -39,6 +39,13 @@ import com.victorious.victordrax.terminal.TerminalScreen
 import com.victorious.victordrax.tools.ToolDetailScreen
 import com.victorious.victordrax.tools.ToolLibraryScreen
 import com.victorious.victordrax.ui.*
+import com.victorious.victordrax.afos.AfosScreen
+import com.victorious.victordrax.backup.BackupScreen
+import com.victorious.victordrax.report.ReportBuilderScreen
+import com.victorious.victordrax.scan.ScanDetailScreen
+import com.victorious.victordrax.scan.ScanListScreen
+import com.victorious.victordrax.workflow.PlaybookListScreen
+import com.victorious.victordrax.workflow.PlaybookScreen
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -101,8 +108,8 @@ fun AppShell(settings: Settings, repo: SettingsRepo, prefs: Prefs, pendingRoute:
     fun go(route: String) = nav.navigate(route) { launchSingleTop = true; popUpTo("dashboard") { saveState = true }; restoreState = true }
     LaunchedEffect(pendingRoute.value) { pendingRoute.value?.let { go(it); pendingRoute.value = null } }
     val selected = primaryDests.firstOrNull { current?.startsWith(it.route) == true }?.route
-        ?: if (current in listOf("install", "desktop", "settings", "about")) "more" else if (current?.startsWith("tool/") == true) "tools"
-        else if (current?.startsWith("engagement/") == true) "engagements" else null
+        ?: if (current in listOf("install", "desktop", "settings", "about", "workflows", "packages", "backup") || current?.startsWith("playbook/") == true) "more" else if (current?.startsWith("tool/") == true) "tools"
+        else if (current?.startsWith("engagement/") == true || current?.startsWith("scan/") == true) "engagements" else null
 
     BoxWithConstraints {
         val wide = maxWidth >= 600.dp
@@ -135,8 +142,21 @@ private fun Host(nav: NavHostController, settings: Settings, repo: SettingsRepo,
         composable("terminal") { TerminalScreen(settings) }
         composable("engagements") { EngagementListScreen(settings) { id -> nav.navigate("engagement/$id") } }
         composable("engagement/{id}", listOf(navArgument("id") { type = NavType.LongType })) {
-            EngagementDetailScreen(it.arguments?.getLong("id") ?: 0, settings, repo) { nav.popBackStack() }
+            EngagementDetailScreen(it.arguments?.getLong("id") ?: 0, settings, repo, { r -> nav.navigate(r) }) { nav.popBackStack() }
         }
+        composable("engagement/{id}/report", listOf(navArgument("id") { type = NavType.LongType })) {
+            ReportBuilderScreen(it.arguments?.getLong("id") ?: 0)
+        }
+        composable("engagement/{id}/scans", listOf(navArgument("id") { type = NavType.LongType })) {
+            ScanListScreen(it.arguments?.getLong("id") ?: 0) { sid -> nav.navigate("scan/$sid") }
+        }
+        composable("scan/{id}", listOf(navArgument("id") { type = NavType.LongType })) { ScanDetailScreen(it.arguments?.getLong("id") ?: 0) }
+        composable("workflows") { PlaybookListScreen { pid -> nav.navigate("playbook/$pid") } }
+        composable("playbook/{id}", listOf(navArgument("id") { type = NavType.LongType })) {
+            PlaybookScreen(it.arguments?.getLong("id") ?: 0, settings) { nav.popBackStack() }
+        }
+        composable("packages") { AfosScreen(settings) }
+        composable("backup") { BackupScreen() }
         composable("more") { MoreScreen(go) }
         composable("install") { InstallScreen(settings, repo) }
         composable("desktop") { DesktopScreen(settings) }
@@ -147,9 +167,11 @@ private fun Host(nav: NavHostController, settings: Settings, repo: SettingsRepo,
 
 @Composable
 fun MoreScreen(go: (String) -> Unit) {
-    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         GradientTitle("More")
-        listOf(Triple("Install environment", Icons.Default.Download, "install"), Triple("Desktop (VNC)", Icons.Default.DesktopWindows, "desktop"),
+        listOf(Triple("Workflows", Icons.Default.PlaylistPlay, "workflows"), Triple("Packages (afos-ng)", Icons.Default.Inventory, "packages"),
+            Triple("Install environment", Icons.Default.Download, "install"), Triple("Desktop (VNC)", Icons.Default.DesktopWindows, "desktop"),
+            Triple("Backup & restore", Icons.Default.Lock, "backup"),
             Triple("Settings", Icons.Default.Settings, "settings"), Triple("About & legal", Icons.Default.Info, "about"))
             .forEach { (l, i, r) -> QuickTile(l, i, Modifier.fillMaxWidth()) { go(r) } }
     }
