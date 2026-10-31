@@ -44,6 +44,7 @@ import com.victorious.victordrax.tools.ToolLibraryScreen
 import com.victorious.victordrax.ui.*
 import com.victorious.victordrax.afos.AfosScreen
 import com.victorious.victordrax.backup.BackupScreen
+import com.victorious.victordrax.beef.BeefScreen
 import com.victorious.victordrax.report.ReportBuilderScreen
 import com.victorious.victordrax.scan.ScanDetailScreen
 import com.victorious.victordrax.scan.ScanListScreen
@@ -113,7 +114,7 @@ fun AppShell(settings: Settings, repo: SettingsRepo, prefs: Prefs, pendingRoute:
     fun go(route: String) = nav.navigate(route) { launchSingleTop = true; popUpTo("dashboard") { saveState = true }; restoreState = true }
     LaunchedEffect(pendingRoute.value) { pendingRoute.value?.let { go(it); pendingRoute.value = null } }
     val selected = primaryDests.firstOrNull { current?.startsWith(it.route) == true }?.route
-        ?: if (current in listOf("install", "desktop", "settings", "about", "workflows", "packages", "backup") || current?.startsWith("playbook/") == true) "more" else if (current?.startsWith("tool/") == true) "tools"
+        ?: if (current in listOf("install", "desktop", "settings", "about", "workflows", "packages", "backup", "beef") || current?.startsWith("playbook/") == true) "more" else if (current?.startsWith("tool/") == true) "tools"
         else if (current?.startsWith("engagement/") == true || current?.startsWith("scan/") == true) "engagements" else null
 
     BoxWithConstraints {
@@ -169,6 +170,7 @@ private fun Host(nav: NavHostController, settings: Settings, repo: SettingsRepo,
         }
         composable("packages") { AfosScreen(settings) }
         composable("backup") { BackupScreen() }
+        composable("beef") { BeefScreen(settings) }
         composable("more") { MoreScreen(go) }
         composable("install") { InstallScreen(settings, repo) }
         composable("desktop") { DesktopScreen(settings) }
@@ -184,6 +186,7 @@ fun MoreScreen(go: (String) -> Unit) {
         listOf(Triple("Workflows", Icons.Default.PlaylistPlay, "workflows"), Triple("Packages (afos-ng)", Icons.Default.Inventory, "packages"),
             Triple("Install environment", Icons.Default.Download, "install"), Triple("Desktop (VNC)", Icons.Default.DesktopWindows, "desktop"),
             Triple("Backup & restore", Icons.Default.Lock, "backup"),
+            Triple("BeEF-XSS control panel", Icons.Default.BugReport, "beef"),
             Triple("Settings", Icons.Default.Settings, "settings"), Triple("About & legal", Icons.Default.Info, "about"))
             .forEach { (l, i, r) -> QuickTile(l, i, Modifier.fillMaxWidth()) { go(r) } }
     }
