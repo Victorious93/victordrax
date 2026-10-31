@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Victorious ANDRAX</string>
+    <string name="widget_stats_desc">Device stats</string>
+    <string name="widget_quick_desc">Quick launch: terminal, tools, desktop</string>
 </resources>
