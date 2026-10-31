@@ -17,12 +17,18 @@ interface TerminalLauncher {
 }
 
 data class TerminalRequest(
-    /** Command to run inside the session (null = interactive shell). */
+    /** Simple command string (null = interactive shell). Restricted to [VictorSuiteLauncher.isSafeCommand]. */
     val command: String?,
     val title: String,
     /** Enter the ANDRAX-NG chroot via su (when installed). */
     val chroot: Boolean,
     val chrootPath: String,
+    /**
+     * Pre-parsed argv built by a tool-form command builder. When present it takes precedence
+     * over [command] and each element is POSIX single-quote escaped, so user-supplied values
+     * (URLs with ?/&, wordlist paths, etc.) are handled safely without a character allow-list.
+     */
+    val argv: List<String>? = null,
 )
 
 sealed interface LaunchResult {
@@ -55,18 +61,47 @@ object VictorSuiteLauncher : TerminalLauncher {
     const val HOME = "/data/data/com.termux/files/home"
     const val RELEASES_URL = "https://github.com/Victorious93/VictorSuite/releases"
 
-    /** Tool commands are restricted to a conservative charset because they are nested inside su/chroot quoting. */
+    /** Tool commands (string path) are restricted to a conservative charset because they are nested inside su/chroot quoting. */
     private val SAFE_CMD = Regex("^[A-Za-z0-9 ._/:=,+@%-]{1,200}$")
     fun isSafeCommand(c: String) = SAFE_CMD.matches(c)
 
+    /**
+     * POSIX single-quote escaping: the returned token, placed verbatim in an unquoted bash
+     * context, expands to exactly [s]. Composable, so it can be nested to any depth.
+     */
+    fun shQuote(s: String): String = "'" + s.replace("'", "'\\''") + "'"
+
+    /** Join an argv into one safely-quoted shell command line. */
+    fun shJoin(argv: List<String>): String = argv.joinToString(" ") { shQuote(it) }
+
+    /** Reject values that cannot be carried even when quoted (NUL / newline would split or truncate). */
+    fun argvIsSafe(argv: List<String>): Boolean =
+        argv.isNotEmpty() && argv.all { it.isNotEmpty() && it.none { c -> c == '\u0000' || c == '\n' || c == '\r' } }
+
     /** The bash -c script that VictorSuite runs. Pure, so it is unit tested. */
     fun script(r: TerminalRequest): String {
+        if (r.argv != null) return scriptFromArgv(r)
         r.command?.let { require(isSafeCommand(it)) { "unsupported characters in command" } }
         val inner = r.command?.let { "$it; exec /bin/bash -l" } ?: "exec /bin/bash -l"
         return if (r.chroot) {
             require(Validation.isSafePath(r.chrootPath))
             "su -c '${Root.chrootPrefix(r.chrootPath)} /bin/bash -lc \"$inner\"'"
         } else r.command?.let { "$it; exec bash -l" } ?: "exec bash -l"
+    }
+
+    /** argv path: every token is single-quote escaped; nesting is built inside-out so it is quote-safe. */
+    private fun scriptFromArgv(r: TerminalRequest): String {
+        val argv = r.argv!!
+        require(argvIsSafe(argv)) { "unsupported characters in argument" }
+        val cmd = shJoin(argv)
+        return if (r.chroot) {
+            require(Validation.isSafePath(r.chrootPath))
+            val inner = "$cmd; exec /bin/bash -l"
+            val full = Root.chrootPrefix(r.chrootPath) + " /bin/bash -lc " + shQuote(inner)
+            "su -c " + shQuote(full)
+        } else {
+            "$cmd; exec bash -l"
+        }
     }
 
     fun intent(r: TerminalRequest): Intent = Intent(ACTION_RUN_COMMAND).setClassName(PACKAGE, SERVICE)
