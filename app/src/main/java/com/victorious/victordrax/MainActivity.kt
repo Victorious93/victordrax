@@ -164,6 +164,9 @@ private fun Host(nav: NavHostController, settings: Settings, repo: SettingsRepo,
             val eid = it.arguments?.getLong("id") ?: 0
             FindingsScreen(eid) { nav.navigate("engagement/$eid/report") }
         }
+        composable("engagement/{id}/export", listOf(navArgument("id") { type = NavType.LongType })) {
+            com.victorious.victordrax.report.ReportExportScreen(it.arguments?.getLong("id") ?: 0)
+        }
         composable("engagement/{id}/scans", listOf(navArgument("id") { type = NavType.LongType })) {
             ScanListScreen(it.arguments?.getLong("id") ?: 0) { sid -> nav.navigate("scan/$sid") }
         }

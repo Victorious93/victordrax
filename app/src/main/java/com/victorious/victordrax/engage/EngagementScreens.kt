@@ -115,8 +115,7 @@ fun EngagementDetailScreen(id: Long, settings: Settings, repo: SettingsRepo, go:
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilledTonalButton({ scope.launch { repo.setActiveEngagement(if (settings.activeEngagementId == id) 0 else id) } }) {
                     Text(if (settings.activeEngagementId == id) "Deactivate" else "Set active") }
-                OutlinedButton({ exportMd.launch("${cur.name}.md") }) { Text("Export .md") }
-                OutlinedButton({ exportPdf.launch("${cur.name}.pdf") }) { Text("Export .pdf") }
+                Button({ go("engagement/$id/export") }) { Text("Report: preview / export / share") }
             }
             Button({ go("engagement/$id/findings") }, Modifier.fillMaxWidth()) { Text("Findings manager") }
             OutlinedButton({ go("engagement/$id/report") }, Modifier.fillMaxWidth()) { Text("Pro report & CVSS") }
