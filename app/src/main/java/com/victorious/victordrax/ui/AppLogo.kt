@@ -13,11 +13,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.victorious.victordrax.R
 
-/** VictorDrax logo: adaptive-icon background + foreground layers. */
+/** VictorDrax logo: neon crown V with >_ cursor (v2 art). */
 @Composable
 fun AppLogo(size: Dp = 72.dp, modifier: Modifier = Modifier) {
     Box(modifier.size(size).clip(RoundedCornerShape(size / 4))) {
-        Image(painterResource(R.drawable.ic_launcher_background), null, Modifier.fillMaxSize())
-        Image(painterResource(R.drawable.ic_launcher_foreground), "VictorDrax logo", Modifier.fillMaxSize())
+        Image(painterResource(R.drawable.victordrax_logo), "VictorDrax logo", Modifier.fillMaxSize())
     }
 }
