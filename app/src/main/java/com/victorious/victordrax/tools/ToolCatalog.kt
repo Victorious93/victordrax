@@ -14,7 +14,17 @@ import kotlinx.serialization.json.Json
     /** Safe default command typed into the terminal (help output). */
     val command: String,
     val upstream: String,
-)
+    /** Documentation link shown on the tool screen; defaults to [upstream] when blank. */
+    val docs: String = "",
+    /** One of the Kali "Top 10" tools. */
+    val topTen: Boolean = false,
+    /** Has a full data-driven GUI form (see ToolSpecs). */
+    val form: Boolean = false,
+    /** Heavy desktop/Java GUI opened via the VNC desktop (see LaunchSpecs). */
+    val launchOnly: Boolean = false,
+) {
+    val docsUrl: String get() = docs.ifBlank { upstream }
+}
 
 @Serializable data class Catalog(val version: Int, val categories: List<Category>, val tools: List<Tool>)
 

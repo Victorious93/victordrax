@@ -1,5 +1,5 @@
 {
- "version": 1,
+ "version": 2,
  "categories": [
   {
    "id": "info",
@@ -46,7 +46,10 @@
    "description": "Network discovery and port scanning.",
    "usage": "nmap -sV <target>",
    "command": "nmap --help",
-   "upstream": "https://nmap.org"
+   "upstream": "https://nmap.org",
+   "topTen": true,
+   "form": true,
+   "docs": "https://nmap.org/book/man.html"
   },
   {
    "id": "masscan",
@@ -91,7 +94,10 @@
    "description": "Wi-Fi security auditing suite.",
    "usage": "airodump-ng <iface>",
    "command": "aircrack-ng --help",
-   "upstream": "https://www.aircrack-ng.org"
+   "upstream": "https://www.aircrack-ng.org",
+   "topTen": true,
+   "form": true,
+   "docs": "https://www.aircrack-ng.org/documentation.html"
   },
   {
    "id": "reaver",
@@ -118,7 +124,10 @@
    "description": "SQL injection detection and testing.",
    "usage": "sqlmap -u 'https://<target>/?id=1'",
    "command": "sqlmap -h",
-   "upstream": "https://sqlmap.org"
+   "upstream": "https://sqlmap.org",
+   "topTen": true,
+   "form": true,
+   "docs": "https://github.com/sqlmapproject/sqlmap/wiki/Usage"
   },
   {
    "id": "wpscan",
@@ -136,7 +145,10 @@
    "description": "Exploitation and validation framework.",
    "usage": "msfconsole",
    "command": "msfconsole -h",
-   "upstream": "https://github.com/rapid7/metasploit-framework"
+   "upstream": "https://github.com/rapid7/metasploit-framework",
+   "topTen": true,
+   "form": true,
+   "docs": "https://docs.metasploit.com/"
   },
   {
    "id": "searchsploit",
@@ -154,7 +166,10 @@
    "description": "Password strength auditing.",
    "usage": "john hashes.txt",
    "command": "john --help",
-   "upstream": "https://www.openwall.com/john/"
+   "upstream": "https://www.openwall.com/john/",
+   "topTen": true,
+   "form": true,
+   "docs": "https://www.openwall.com/john/doc/"
   },
   {
    "id": "hashcat",
@@ -172,7 +187,10 @@
    "description": "Network login auditing.",
    "usage": "hydra -l user -P list.txt ssh://<target>",
    "command": "hydra -h",
-   "upstream": "https://github.com/vanhauser-thc/thc-hydra"
+   "upstream": "https://github.com/vanhauser-thc/thc-hydra",
+   "topTen": true,
+   "form": true,
+   "docs": "https://github.com/vanhauser-thc/thc-hydra#how-to-use"
   },
   {
    "id": "binwalk",
@@ -227,6 +245,54 @@
    "usage": "bettercap -iface <iface>",
    "command": "bettercap -h",
    "upstream": "https://github.com/bettercap/bettercap"
+  },
+  {
+   "id": "zaproxy",
+   "name": "OWASP ZAP",
+   "category": "web",
+   "description": "Web app scanner (headless zap.sh -cmd / zap-cli).",
+   "usage": "zap.sh -cmd -quickurl https://<target> -quickout report.html",
+   "command": "zap.sh -h",
+   "upstream": "https://www.zaproxy.org",
+   "docs": "https://www.zaproxy.org/docs/",
+   "topTen": true,
+   "form": true
+  },
+  {
+   "id": "burpsuite",
+   "name": "Burp Suite",
+   "category": "web",
+   "description": "Web proxy & app testing (Java desktop GUI; opens in VNC desktop).",
+   "usage": "burpsuite",
+   "command": "burpsuite --help",
+   "upstream": "https://portswigger.net/burp",
+   "docs": "https://portswigger.net/burp/documentation",
+   "topTen": true,
+   "launchOnly": true
+  },
+  {
+   "id": "maltego",
+   "name": "Maltego",
+   "category": "info",
+   "description": "OSINT & link analysis (Java desktop GUI; opens in VNC desktop).",
+   "usage": "maltego",
+   "command": "maltego --help",
+   "upstream": "https://www.maltego.com",
+   "docs": "https://docs.maltego.com/",
+   "topTen": true,
+   "launchOnly": true
+  },
+  {
+   "id": "wireshark",
+   "name": "Wireshark",
+   "category": "sniff",
+   "description": "Packet analyzer (GTK desktop GUI; opens in VNC, or capture to file with dumpcap/tshark).",
+   "usage": "wireshark  (or: dumpcap -i <iface> -w out.pcap)",
+   "command": "wireshark --help",
+   "upstream": "https://www.wireshark.org",
+   "docs": "https://www.wireshark.org/docs/",
+   "topTen": true,
+   "launchOnly": true
   }
  ]
 }

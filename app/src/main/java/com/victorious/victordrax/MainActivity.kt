@@ -37,6 +37,9 @@ import com.victorious.victordrax.engage.EngagementListScreen
 import com.victorious.victordrax.install.InstallScreen
 import com.victorious.victordrax.terminal.TerminalScreen
 import com.victorious.victordrax.tools.ToolDetailScreen
+import com.victorious.victordrax.tools.ToolFormScreen
+import com.victorious.victordrax.tools.MetasploitScreen
+import com.victorious.victordrax.tools.LaunchOnlyScreen
 import com.victorious.victordrax.tools.ToolLibraryScreen
 import com.victorious.victordrax.ui.*
 import com.victorious.victordrax.afos.AfosScreen
@@ -139,7 +142,14 @@ private fun Host(nav: NavHostController, settings: Settings, repo: SettingsRepo,
         composable("dashboard") { DashboardScreen(settings, go) }
         composable("tools") { ToolLibraryScreen(settings, repo) { nav.navigate("tool/$it") } }
         composable("tool/{id}", listOf(navArgument("id") { type = NavType.StringType })) {
-            ToolDetailScreen(it.arguments?.getString("id") ?: "", settings, repo) {}
+            ToolDetailScreen(it.arguments?.getString("id") ?: "", settings, repo, openScreen = { r -> nav.navigate(r) })
+        }
+        composable("toolform/{id}", listOf(navArgument("id") { type = NavType.StringType })) {
+            ToolFormScreen(it.arguments?.getString("id") ?: "", settings, repo)
+        }
+        composable("metasploit") { MetasploitScreen(settings, repo) }
+        composable("launch/{id}", listOf(navArgument("id") { type = NavType.StringType })) {
+            LaunchOnlyScreen(it.arguments?.getString("id") ?: "", settings)
         }
         composable("terminal") { TerminalScreen(settings) }
         composable("engagements") { EngagementListScreen(settings) { id -> nav.navigate("engagement/$id") } }

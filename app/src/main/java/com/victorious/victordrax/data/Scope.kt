@@ -1,8 +1,18 @@
 package com.victorious.victordrax.data
 
+import java.net.URI
+
 /**
- * Target / scope validation. Used to make sure a workflow or scan only ever runs against a target
- * that is inside an authorized engagement's scope. Pure (no Android deps) so it is unit tested.
+ * Target / scope validation. Guarantees a workflow, scan or tool-form command can only ever run
+ * against a target inside an authorized engagement's scope. Pure (no Android deps) so it is unit
+ * tested. Merges the batch-2 validation API (isValidScopeEntry / targetInScope …) with the Top-10
+ * tool-suite helpers (hostOf / inScope, which also accept URLs, host:port and *.wildcard entries).
+ *
+ * A scope line can be:
+ *  - an exact host or IPv4 address        (example.com, 10.0.0.5)
+ *  - a domain (matches the host and any sub-domain)  (example.com matches api.example.com)
+ *  - a wildcard domain                    (*.example.com)
+ *  - an IPv4 CIDR range                   (10.0.0.0/24)
  */
 object Scope {
     private val HOSTNAME = Regex("^(?=.{1,253}$)([A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(\\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$")
@@ -22,10 +32,11 @@ object Scope {
 
     fun isHostname(s: String): Boolean = !isIpv4(s) && HOSTNAME.matches(s) && s.any { it == '.' || it.isLetter() }
 
-    /** A scope entry is valid if it is an IPv4, a CIDR block or a hostname. */
-    fun isValidScopeEntry(s: String): Boolean = s.isNotBlank() && (isIpv4(s) || isCidr(s) || isHostname(s))
+    /** A scope entry is valid if it is an IPv4, a CIDR block, a hostname or a *.wildcard domain. */
+    fun isValidScopeEntry(s: String): Boolean =
+        s.isNotBlank() && (isIpv4(s) || isCidr(s) || isHostname(s) || (s.startsWith("*.") && isHostname(s.substring(2))))
 
-    fun isValidTarget(s: String): Boolean = isValidScopeEntry(s)
+    fun isValidTarget(s: String): Boolean = s.isNotBlank() && (isIpv4(s) || isCidr(s) || isHostname(s))
 
     private fun ipToLong(ip: String): Long =
         ip.split('.').fold(0L) { acc, o -> (acc shl 8) or o.toLong() }
@@ -41,7 +52,8 @@ object Scope {
     /**
      * True if [target] is covered by at least one entry in [scope].
      * IPv4 targets match an identical IP or any containing CIDR. Hostnames match
-     * case-insensitively (exact, or a subdomain of a scope hostname).
+     * case-insensitively (exact, or a subdomain of a scope hostname). Wildcard entries
+     * (*.example.com) match any strict subdomain.
      */
     fun targetInScope(target: String, scope: List<String>): Boolean {
         val t = target.trim()
@@ -49,9 +61,13 @@ object Scope {
         for (raw in scope) {
             val e = raw.trim()
             when {
+                e.startsWith("*.") -> {
+                    val suffix = e.substring(1).lowercase()            // ".example.com"
+                    val lt = t.lowercase()
+                    if (lt.endsWith(suffix) && lt != suffix.removePrefix(".")) return true
+                }
                 isCidr(e) && isIpv4(t) -> if (inCidr(t, e)) return true
                 isCidr(e) && isCidr(t) -> {
-                    // a target range is in scope only if it is entirely inside the scope range
                     val tb = t.substringAfter('/').toInt(); val eb = e.substringAfter('/').toInt()
                     if (tb >= eb && inCidr(t.substringBefore('/'), e)) return true
                 }
@@ -63,5 +79,28 @@ object Scope {
             }
         }
         return false
+    }
+
+    // --- Top-10 tool-suite helpers ---------------------------------------------------------
+
+    /** Extract the bare host from a target that may be a URL, host:port, or plain host/IP. */
+    fun hostOf(target: String): String {
+        var t = target.trim()
+        if (t.isEmpty()) return ""
+        if ("://" in t) {
+            runCatching { URI(t).host }.getOrNull()?.let { if (it.isNotBlank()) return it.lowercase() }
+            t = t.substringAfter("://")
+        }
+        t = t.substringBefore('/').substringBefore('?').substringBefore('#')
+        t = t.substringAfterLast('@')
+        if (t.count { it == ':' } == 1) t = t.substringBefore(':')
+        return t.lowercase()
+    }
+
+    /** True when [target] (a plain host/IP, host:port or URL) resolves to a host inside [scope]. */
+    fun inScope(target: String, scope: List<String>): Boolean {
+        val host = hostOf(target)
+        if (host.isBlank() || scope.isEmpty()) return false
+        return targetInScope(host, scope)
     }
 }

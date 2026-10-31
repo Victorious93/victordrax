@@ -20,6 +20,7 @@ import com.victorious.victordrax.data.Settings
 import com.victorious.victordrax.data.SettingsRepo
 import com.victorious.victordrax.db.AppDb
 import com.victorious.victordrax.terminal.*
+import com.victorious.victordrax.tools.spec.ToolSpecs
 import com.victorious.victordrax.ui.*
 import kotlinx.coroutines.launch
 
@@ -67,7 +68,7 @@ fun ToolLibraryScreen(settings: Settings, repo: SettingsRepo, open: (String) -> 
 }
 
 @Composable
-fun ToolDetailScreen(id: String, settings: Settings, repo: SettingsRepo, onLaunched: () -> Unit) {
+fun ToolDetailScreen(id: String, settings: Settings, repo: SettingsRepo, openScreen: (String) -> Unit = {}, onLaunched: () -> Unit = {}) {
     val ctx = LocalContext.current
     val tool = rememberCatalog()?.tools?.find { it.id == id } ?: run { Text("Unknown tool"); return }
     val scope = rememberCoroutineScope()
@@ -77,6 +78,17 @@ fun ToolDetailScreen(id: String, settings: Settings, repo: SettingsRepo, onLaunc
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         GradientTitle(tool.name)
         AuthorizedBanner()
+        val dedicated: Pair<String, String>? = when {
+            tool.id == "metasploit" -> "metasploit" to "Open console & resource builder"
+            ToolSpecs.byId(tool.id) != null -> "toolform/${tool.id}" to "Open ${tool.name} form"
+            tool.launchOnly -> "launch/${tool.id}" to "Open launcher (desktop)"
+            else -> null
+        }
+        dedicated?.let { (route, label) ->
+            Button({ openScreen(route) }, Modifier.padding(vertical = 8.dp)) {
+                Icon(Icons.Default.OpenInNew, null); Spacer(Modifier.width(6.dp)); Text(label)
+            }
+        }
         Section("Description") { Text(tool.description) }
         Section("Usage") { Text(tool.usage, fontFamily = FontFamily.Monospace) }
         Section("Upstream") { LinkButton(tool.upstream, tool.upstream) }
