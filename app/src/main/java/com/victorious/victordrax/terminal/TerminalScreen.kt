@@ -1,5 +1,9 @@
 package com.victorious.victordrax.terminal
 
+import android.content.Context
+import com.victorious.victordrax.privilege.Privilege
+import com.victorious.victordrax.privilege.PrivilegeBackend
+
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,8 +40,15 @@ class TerminalLaunchState {
 
 @Composable fun rememberTerminalLaunchState() = remember { TerminalLaunchState() }
 
-fun requestFor(settings: Settings, command: String?, title: String) =
-    TerminalRequest(command, title, chroot = settings.envInstalled && Root.suBinaryPresent(), chrootPath = settings.installPath)
+/** Same PrivilegeMode resolution as in-app runs (Privilege.exec / snapshot). */
+fun requestFor(ctx: Context, settings: Settings, command: String?, title: String, argv: List<String>? = null): TerminalRequest =
+    requestFor(Privilege.snapshot(ctx, settings.privilegeMode), settings.envInstalled, settings.installPath, command, title, argv)
+
+/** Pure variant for tests. Chroot is requested whenever ANDRAX-NG is installed and some backend exists. */
+fun requestFor(snap: Privilege.Snapshot, envInstalled: Boolean, installPath: String, command: String?, title: String, argv: List<String>? = null) =
+    TerminalRequest(command, title,
+        chroot = envInstalled && snap.backend != PrivilegeBackend.NONE,
+        chrootPath = installPath, argv = argv, backend = snap.backend, canChroot = snap.canChroot)
 
 @Composable
 fun InstallVictorSuiteDialog(state: TerminalLaunchState) {
@@ -57,7 +68,7 @@ fun TerminalScreen(settings: Settings) {
     var available by remember { mutableStateOf(VictorSuiteLauncher.isAvailable(ctx)) }
     var granted by remember { mutableStateOf(VictorSuiteLauncher.hasPermission(ctx)) }
     val perm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted = it }
-    val req = requestFor(settings, null, "ANDRAX-NG")
+    val req = requestFor(ctx, settings, null, "ANDRAX-NG")
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         GradientTitle("Terminal")
         Section("VictorSuite") {

@@ -74,7 +74,7 @@ fun ToolDetailScreen(id: String, settings: Settings, repo: SettingsRepo, openScr
     val scope = rememberCoroutineScope()
     var warn by remember { mutableStateOf<String?>(null) }
     val term = rememberTerminalLaunchState()
-    fun launch() { term.handle(VictorSuiteLauncher.launch(ctx, requestFor(settings, tool.command, tool.name))) }
+    fun launch() { term.handle(VictorSuiteLauncher.launch(ctx, requestFor(ctx, settings, tool.command, tool.name))) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         GradientTitle(tool.name)
         AuthorizedBanner()
