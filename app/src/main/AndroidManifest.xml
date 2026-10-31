@@ -7,9 +7,12 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <!-- VictorSuite (Termux-based, package com.termux) RUN_COMMAND; the user must grant it. -->
     <uses-permission android:name="com.termux.permission.RUN_COMMAND" />
+    <!-- Shizuku API (RikkaApps). Granted at runtime via Shizuku.requestPermission. -->
+    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
 
     <queries>
         <package android:name="com.termux" />
+        <package android:name="moe.shizuku.privileged.api" />
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="vnc" />
@@ -36,6 +39,15 @@
             </intent-filter>
         </activity>
 
+
+        <!-- Required by Shizuku to deliver the binder; protect with INTERACT_ACROSS_USERS_FULL. -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:multiprocess="false"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 
         <service android:name="androidx.work.impl.foreground.SystemForegroundService"
             android:foregroundServiceType="dataSync" android:exported="false" />

@@ -13,6 +13,8 @@ This repository contains only original code. No upstream files are copied.
 - AndroidX / Jetpack Compose, Navigation Compose — Apache-2.0
 - Kotlin — Apache-2.0
 - Gradle wrapper — Apache-2.0
+- Shizuku API + Provider (`dev.rikka.shizuku:api` / `provider`) — RikkaApps, Apache-2.0
+  (https://github.com/RikkaApps/Shizuku-API). Runtime companion app: Shizuku / Sui — not bundled.
 
 ## VictorSuite (separate app, not bundled)
 

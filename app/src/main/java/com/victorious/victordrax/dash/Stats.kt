@@ -9,6 +9,8 @@ import android.net.NetworkCapabilities
 import android.os.BatteryManager
 import com.victorious.victordrax.DeviceStatus
 import com.victorious.victordrax.data.Root
+import com.victorious.victordrax.shizuku.ShizukuGate
+import com.victorious.victordrax.shizuku.ShizukuStatus
 import java.io.File
 
 data class Stats(
@@ -16,7 +18,7 @@ data class Stats(
     val ramUsed: Long, val ramTotal: Long,
     val storageFree: Long, val storageTotal: Long,
     val batteryPct: Int, val charging: Boolean, val batteryTempC: Float,
-    val network: String, val root: Boolean, val arch: String,
+    val network: String, val root: Boolean, val shizuku: Boolean, val arch: String,
 )
 
 object StatsReader {
@@ -54,7 +56,8 @@ object StatsReader {
         return Stats(cores, load, mhz, mi.totalMem - mi.availMem, mi.totalMem, st.availableBytes, st.totalBytes,
             if (scale > 0 && level >= 0) level * 100 / scale else -1,
             status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL,
-            temp, net, Root.suBinaryPresent(), DeviceStatus.arch())
+            temp, net, Root.suBinaryPresent(),
+            ShizukuGate.status(ctx) == ShizukuStatus.GRANTED, DeviceStatus.arch())
     }
 
     fun gb(b: Long) = String.format("%.1f GB", b / 1073741824.0)
