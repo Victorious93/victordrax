@@ -53,7 +53,7 @@ fun ReportBuilderScreen(engagementId: Long) {
     }
     val exportPdf = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
         uri ?: return@rememberLauncherForActivityResult
-        scope.launch { withContext(Dispatchers.IO) { ctx.contentResolver.openOutputStream(uri)?.use { FindingReport.writePdf(cur, findings, it) } }; msg = "PDF report exported" }
+        scope.launch { withContext(Dispatchers.IO) { ctx.contentResolver.openOutputStream(uri)?.use { FindingReport.writePdf(cur, findings, it, logo = androidx.core.content.ContextCompat.getDrawable(ctx, com.victorious.victordrax.R.drawable.ic_launcher_foreground)) } }; msg = "PDF report exported" }
     }
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background, floatingActionButton = {

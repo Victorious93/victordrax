@@ -83,6 +83,8 @@ fun FirstRunScreen(onAccept: () -> Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp)) {
         Box(Modifier.fillMaxWidth().height(4.dp).background(NeonGradient))
         Spacer(Modifier.height(16.dp))
+        com.victorious.victordrax.ui.AppLogo(96.dp)
+        Spacer(Modifier.height(8.dp))
         GradientTitle("VictorDrax")
         Spacer(Modifier.height(16.dp))
         Section("Legal notice") { Text(LEGAL_NOTICE) }
@@ -209,6 +211,7 @@ fun SettingsScreen(settings: Settings, repo: SettingsRepo, prefs: Prefs) {
 fun AboutScreen() {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         GradientTitle("About")
+        com.victorious.victordrax.ui.AppLogo(80.dp, Modifier.padding(vertical = 8.dp))
         Section("Legal notice") { Text(LEGAL_NOTICE) }
         Section("Credits") {
             Text("• ANDRAX — original by Weidsom Nascimento / The Cracker Technology\n" +
