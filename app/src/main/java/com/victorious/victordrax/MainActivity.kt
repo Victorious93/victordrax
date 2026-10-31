@@ -45,6 +45,7 @@ import com.victorious.victordrax.ui.*
 import com.victorious.victordrax.afos.AfosScreen
 import com.victorious.victordrax.backup.BackupScreen
 import com.victorious.victordrax.report.ReportBuilderScreen
+import com.victorious.victordrax.findings.FindingsScreen
 import com.victorious.victordrax.scan.ScanDetailScreen
 import com.victorious.victordrax.scan.ScanListScreen
 import com.victorious.victordrax.workflow.PlaybookListScreen
@@ -158,6 +159,10 @@ private fun Host(nav: NavHostController, settings: Settings, repo: SettingsRepo,
         }
         composable("engagement/{id}/report", listOf(navArgument("id") { type = NavType.LongType })) {
             ReportBuilderScreen(it.arguments?.getLong("id") ?: 0)
+        }
+        composable("engagement/{id}/findings", listOf(navArgument("id") { type = NavType.LongType })) {
+            val eid = it.arguments?.getLong("id") ?: 0
+            FindingsScreen(eid) { nav.navigate("engagement/$eid/report") }
         }
         composable("engagement/{id}/scans", listOf(navArgument("id") { type = NavType.LongType })) {
             ScanListScreen(it.arguments?.getLong("id") ?: 0) { sid -> nav.navigate("scan/$sid") }
