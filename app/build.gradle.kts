@@ -41,7 +41,15 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true; buildConfig = true }
-    testOptions { unitTests.isIncludeAndroidResources = true }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all { t ->
+            t.systemProperty("victordrax.shots", rootProject.file("docs/screenshots").absolutePath)
+            t.maxHeapSize = "2g"
+        }
+    }
+    // Room schemas as debug assets so MigrationTestHelper (Robolectric) can load them. Not in release.
+    sourceSets { getByName("debug").assets.srcDir("$projectDir/schemas") }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
 }
 
@@ -71,8 +79,12 @@ dependencies {
     ksp("androidx.room:room-compiler:$room")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation(bom)
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
     testImplementation("org.robolectric:robolectric:4.12.2")
     testImplementation("androidx.test:core-ktx:1.6.1")
     testImplementation("androidx.room:room-testing:$room")
+    testImplementation("androidx.work:work-testing:2.9.1")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }

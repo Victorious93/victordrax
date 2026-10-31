@@ -55,7 +55,7 @@ fun EngagementListScreen(settings: Settings, open: (Long) -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EngagementDetailScreen(id: Long, settings: Settings, repo: SettingsRepo, back: () -> Unit) {
+fun EngagementDetailScreen(id: Long, settings: Settings, repo: SettingsRepo, go: (String) -> Unit = {}, back: () -> Unit) {
     val ctx = LocalContext.current
     val dao = AppDb.get(ctx).engagements()
     val e by dao.observe(id).collectAsState(initial = null)
@@ -111,11 +111,17 @@ fun EngagementDetailScreen(id: Long, settings: Settings, repo: SettingsRepo, bac
                 Text(if (cur.isAuthorized) "✔ Authorization recorded" else "⚠ Incomplete — tools will warn before launching",
                     color = if (cur.isAuthorized) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary)
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            @OptIn(ExperimentalLayoutApi::class)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilledTonalButton({ scope.launch { repo.setActiveEngagement(if (settings.activeEngagementId == id) 0 else id) } }) {
                     Text(if (settings.activeEngagementId == id) "Deactivate" else "Set active") }
                 OutlinedButton({ exportMd.launch("${cur.name}.md") }) { Text("Export .md") }
                 OutlinedButton({ exportPdf.launch("${cur.name}.pdf") }) { Text("Export .pdf") }
+            }
+            Button({ go("engagement/$id/report") }, Modifier.fillMaxWidth()) { Text("Findings & report") }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton({ go("engagement/$id/scans") }, Modifier.weight(1f)) { Text("Scan results") }
+                OutlinedButton({ go("workflows") }, Modifier.weight(1f)) { Text("Workflows") }
             }
             msg?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
             Section("Notes") {
