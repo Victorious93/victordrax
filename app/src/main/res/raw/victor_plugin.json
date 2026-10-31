@@ -1,0 +1,23 @@
+{
+  "manifestVersion": 1,
+  "id": "com.victorious.andrax",
+  "name": "Victorious ANDRAX",
+  "description": "Launcher/installer for the ANDRAX-NG environment. Authorized testing only.",
+  "version": "0.2.0",
+  "type": "apk",
+  "category": "network",
+  "license": "Apache-2.0",
+  "sourceUrl": "https://github.com/Victorious93/victorious-andrax",
+  "authors": ["Victorious93"],
+  "apkPackageName": "com.victorious.andrax",
+  "apkSigningCertSha256": "",
+  "permissions": ["run_command", "root"],
+  "actions": [
+    {"id": "dashboard", "label": "Dashboard", "command": "", "destructive": false},
+    {"id": "tools", "label": "Tool library", "command": "", "destructive": false},
+    {"id": "terminal", "label": "ANDRAX-NG shell", "command": "", "destructive": false},
+    {"id": "engagements", "label": "Engagements", "command": "", "destructive": false},
+    {"id": "install", "label": "Install environment", "command": "", "destructive": false},
+    {"id": "desktop", "label": "Desktop (VNC)", "command": "", "destructive": false}
+  ]
+}
