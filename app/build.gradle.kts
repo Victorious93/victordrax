@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.victorious.andrax"
+    namespace = "com.victorious.victordrax"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.victorious.andrax"
+        applicationId = "com.victorious.victordrax"
         minSdk = 26
         targetSdk = 34
         versionCode = 2
