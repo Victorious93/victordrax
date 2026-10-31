@@ -174,6 +174,7 @@ private fun Host(nav: NavHostController, settings: Settings, repo: SettingsRepo,
         composable("desktop") { DesktopScreen(settings) }
         composable("settings") { SettingsScreen(settings, repo, prefs) }
         composable("about") { AboutScreen() }
+        composable("schedules") { com.victorious.victordrax.schedule.ScheduleScreen(settings) }
     }
 }
 
@@ -181,7 +182,7 @@ private fun Host(nav: NavHostController, settings: Settings, repo: SettingsRepo,
 fun MoreScreen(go: (String) -> Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         GradientTitle("More")
-        listOf(Triple("Workflows", Icons.Default.PlaylistPlay, "workflows"), Triple("Packages (afos-ng)", Icons.Default.Inventory, "packages"),
+        listOf(Triple("Workflows", Icons.Default.PlaylistPlay, "workflows"), Triple("Scan scheduler", Icons.Default.Schedule, "schedules"), Triple("Packages (afos-ng)", Icons.Default.Inventory, "packages"),
             Triple("Install environment", Icons.Default.Download, "install"), Triple("Desktop (VNC)", Icons.Default.DesktopWindows, "desktop"),
             Triple("Backup & restore", Icons.Default.Lock, "backup"),
             Triple("Settings", Icons.Default.Settings, "settings"), Triple("About & legal", Icons.Default.Info, "about"))
