@@ -9,7 +9,7 @@ import androidx.core.app.NotificationCompat
 import androidx.work.*
 import com.victorious.victordrax.R
 import com.victorious.victordrax.data.Checksum
-import com.victorious.victordrax.data.Root
+import com.victorious.victordrax.privilege.Privilege
 import com.victorious.victordrax.data.SettingsRepo
 import com.victorious.victordrax.data.Validation
 import java.io.File
@@ -49,7 +49,14 @@ class InstallWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ct
         val expected = Checksum.parseExpected(s.rootfsSha256) ?: return fail("A valid SHA-256 (64 hex chars) is required before installing.")
         val flags = Validation.tarFlagsFor(s.rootfsUrl) ?: return fail("Unsupported archive type. Use .tar, .tar.gz or .tar.xz.")
         if (!Validation.isSafePath(s.installPath)) return fail("Install path contains unsupported characters.")
-        if (!Root.suBinaryPresent()) return fail("Root (su) not found. The chroot needs a rooted device.")
+        val mode = s.privilegeMode
+        // Chroot extract needs uid 0: classic su, or Shizuku started via Sui/root.
+        if (!Privilege.canChroot(applicationContext, mode)) {
+            return fail(
+                "Chroot install needs uid 0. Enable root (su) or Shizuku via Sui, " +
+                    "and set Privilege mode to Auto/Root/Shizuku in Settings.",
+            )
+        }
 
         setForeground(foreground("Downloading rootfs…", 0))
         val part = partFile(applicationContext)
@@ -68,7 +75,7 @@ class InstallWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ct
         val p = s.installPath
         val src = part.absolutePath
         if (!Validation.isSafePath(src)) return fail("Unexpected download path.")
-        val r = Root.exec("mkdir -p $p && tar $flags $src -C $p && touch $p/.victorious_installed")
+        val r = Privilege.exec(mode, "mkdir -p $p && tar $flags $src -C $p && touch $p/.victorious_installed")
         if (r.code != 0) return fail("Extraction failed (exit ${r.code}): ${r.out.takeLast(400)}")
         part.delete()
         repo.setInstalled(true)
@@ -119,9 +126,9 @@ class InstallWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ct
 }
 
 object Uninstaller {
-    suspend fun uninstall(path: String): String? {
+    suspend fun uninstall(path: String, mode: com.victorious.victordrax.privilege.PrivilegeMode): String? {
         if (!Validation.isSafePath(path) || path == "/" || path.count { it == '/' } < 2) return "Refusing to delete unsafe path: $path"
-        val r = Root.exec("for m in dev/pts dev proc sys; do umount $path/\$m 2>/dev/null; done; " +
+        val r = Privilege.exec(mode, "for m in dev/pts dev proc sys; do umount $path/\$m 2>/dev/null; done; " +
             "if mount | grep -q \" $path/\"; then echo 'still mounted'; exit 3; fi; rm -rf $path")
         return if (r.code == 0) null else "Uninstall failed (exit ${r.code}): ${r.out.takeLast(300)}"
     }

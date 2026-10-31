@@ -10,6 +10,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import com.victorious.victordrax.privilege.PrivilegeMode
 
 val Context.dataStore by preferencesDataStore(name = "va_settings")
 
@@ -24,6 +25,7 @@ data class Settings(
     val envInstalled: Boolean = false,
     val activeEngagementId: Long = 0L,
     val vncDisplay: String = ":1",
+    val privilegeMode: PrivilegeMode = PrivilegeMode.AUTO,
 )
 
 const val DEFAULT_INSTALL_PATH = "/data/local/andrax"
@@ -38,6 +40,7 @@ class SettingsRepo(private val ctx: Context) {
         val installed = booleanPreferencesKey("env_installed")
         val active = longPreferencesKey("active_engagement")
         val vnc = stringPreferencesKey("vnc_display")
+        val privilege = stringPreferencesKey("privilege_mode")
     }
 
     val settings: Flow<Settings> = ctx.dataStore.data.map { p ->
@@ -50,6 +53,7 @@ class SettingsRepo(private val ctx: Context) {
             envInstalled = p[K.installed] ?: false,
             activeEngagementId = p[K.active] ?: 0L,
             vncDisplay = p[K.vnc] ?: ":1",
+            privilegeMode = p[K.privilege]?.let { runCatching { PrivilegeMode.valueOf(it) }.getOrNull() } ?: PrivilegeMode.AUTO,
         )
     }
 
@@ -64,4 +68,5 @@ class SettingsRepo(private val ctx: Context) {
     suspend fun setInstalled(v: Boolean) = ctx.dataStore.edit { it[K.installed] = v }
     suspend fun setActiveEngagement(id: Long) = ctx.dataStore.edit { it[K.active] = id }
     suspend fun setVncDisplay(v: String) = ctx.dataStore.edit { it[K.vnc] = v }
+    suspend fun setPrivilegeMode(m: PrivilegeMode) = ctx.dataStore.edit { it[K.privilege] = m.name }
 }

@@ -6,7 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.victorious.victordrax.data.Root
+import com.victorious.victordrax.privilege.Privilege
 import com.victorious.victordrax.data.Settings
 import com.victorious.victordrax.ui.GradientTitle
 import com.victorious.victordrax.ui.LinkButton
@@ -19,7 +19,7 @@ fun DesktopScreen(settings: Settings) {
     val scope = rememberCoroutineScope()
     var log by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
-    val ready = settings.envInstalled && Root.suBinaryPresent()
+    val ready = settings.envInstalled && Privilege.canChroot(ctx, settings.privilegeMode)
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         GradientTitle("Desktop (VNC)")
         Section("Server") {
@@ -27,9 +27,9 @@ fun DesktopScreen(settings: Settings) {
             if (!ready) Text("Requires root and an installed environment.", color = MaterialTheme.colorScheme.secondary)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(enabled = ready && !busy, onClick = { busy = true; scope.launch {
-                    val r = Vnc.start(settings.installPath, settings.vncDisplay); log = "start → exit ${r.code}\n${r.out}"; busy = false } }) { Text("Start") }
+                    val r = Vnc.start(settings.installPath, settings.vncDisplay, settings.privilegeMode); log = "start → exit ${r.code}\n${r.out}"; busy = false } }) { Text("Start") }
                 OutlinedButton(enabled = ready && !busy, onClick = { busy = true; scope.launch {
-                    val r = Vnc.stop(settings.installPath, settings.vncDisplay); log = "stop → exit ${r.code}\n${r.out}"; busy = false } }) { Text("Stop") }
+                    val r = Vnc.stop(settings.installPath, settings.vncDisplay, settings.privilegeMode); log = "stop → exit ${r.code}\n${r.out}"; busy = false } }) { Text("Stop") }
             }
         }
         Section("Viewer") {

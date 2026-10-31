@@ -54,6 +54,7 @@ fun DashboardScreen(settings: Settings, navigate: (String) -> Unit) {
         item { StatCard("Temperature", "${s.batteryTempC} °C", null, "battery sensor") }
         item { StatCard("Network", s.network, null) }
         item { StatCard("Root", if (s.root) "available" else "not detected", null, s.arch) }
+        item { StatCard("Shizuku", if (s.shizuku) "granted" else "not granted", null, "Settings → Privilege") }
         item { StatCard("ANDRAX-NG env", if (settings.envInstalled) "installed" else "not installed", null, settings.installPath) }
         item(span = { GridItemSpan(maxLineSpan) }) { Text("Quick actions", Modifier.padding(top = 8.dp), color = MaterialTheme.colorScheme.primary) }
         item { QuickTile("Terminal", Icons.Default.Terminal) { navigate("terminal") } }
