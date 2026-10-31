@@ -16,12 +16,17 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
-      - name: Unit tests
+      - name: Unit tests (incl. Robolectric screenshot smoke test)
         run: ./gradlew --no-daemon testDebugUnitTest
       - name: Build debug APK
         run: ./gradlew --no-daemon assembleDebug
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: victorious-andrax-debug-apk
+          name: test-reports
+          path: app/build/reports/tests/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: victordrax-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error

@@ -1,0 +1,4 @@
+# Nmap 7.94 scan initiated as: nmap -sV -oG scan.gnmap 192.168.56.2
+Host: 192.168.56.2 (lab-web.local)	Status: Up
+Host: 192.168.56.2 (lab-web.local)	Ports: 22/open/tcp//ssh//OpenSSH 9.2p1 Debian 2/, 80/open/tcp//http//nginx 1.22.1/, 443/filtered/tcp//https///	Ignored State: closed (997)
+# Nmap done -- 1 IP address (1 host up) scanned

@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.VictoriousAndrax" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/ic_bg</item>
+        <item name="android:statusBarColor">@color/ic_bg</item>
+        <item name="android:windowSplashScreenBackground">@color/ic_bg</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+    </style>
+</resources>
