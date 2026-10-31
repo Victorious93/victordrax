@@ -1,0 +1,232 @@
+{
+ "version": 1,
+ "categories": [
+  {
+   "id": "info",
+   "name": "Information Gathering"
+  },
+  {
+   "id": "scan",
+   "name": "Scanning"
+  },
+  {
+   "id": "wireless",
+   "name": "Wireless"
+  },
+  {
+   "id": "web",
+   "name": "Web Applications"
+  },
+  {
+   "id": "exploit",
+   "name": "Exploitation Frameworks"
+  },
+  {
+   "id": "password",
+   "name": "Password Attacks"
+  },
+  {
+   "id": "forensics",
+   "name": "Forensics"
+  },
+  {
+   "id": "reverse",
+   "name": "Reverse Engineering"
+  },
+  {
+   "id": "sniff",
+   "name": "Sniffing & Spoofing"
+  }
+ ],
+ "tools": [
+  {
+   "id": "nmap",
+   "name": "Nmap",
+   "category": "scan",
+   "description": "Network discovery and port scanning.",
+   "usage": "nmap -sV <target>",
+   "command": "nmap --help",
+   "upstream": "https://nmap.org"
+  },
+  {
+   "id": "masscan",
+   "name": "Masscan",
+   "category": "scan",
+   "description": "Fast asynchronous TCP port scanner.",
+   "usage": "masscan -p1-1024 <range> --rate 1000",
+   "command": "masscan --help",
+   "upstream": "https://github.com/robertdavidgraham/masscan"
+  },
+  {
+   "id": "whois",
+   "name": "whois",
+   "category": "info",
+   "description": "Domain/IP registration lookup.",
+   "usage": "whois example.com",
+   "command": "whois --help",
+   "upstream": "https://github.com/rfc1036/whois"
+  },
+  {
+   "id": "dnsrecon",
+   "name": "DNSRecon",
+   "category": "info",
+   "description": "DNS enumeration.",
+   "usage": "dnsrecon -d example.com",
+   "command": "dnsrecon -h",
+   "upstream": "https://github.com/darkoperator/dnsrecon"
+  },
+  {
+   "id": "theharvester",
+   "name": "theHarvester",
+   "category": "info",
+   "description": "OSINT for emails, hosts and subdomains.",
+   "usage": "theHarvester -d example.com -b all",
+   "command": "theHarvester -h",
+   "upstream": "https://github.com/laramies/theHarvester"
+  },
+  {
+   "id": "aircrack",
+   "name": "Aircrack-ng",
+   "category": "wireless",
+   "description": "Wi-Fi security auditing suite.",
+   "usage": "airodump-ng <iface>",
+   "command": "aircrack-ng --help",
+   "upstream": "https://www.aircrack-ng.org"
+  },
+  {
+   "id": "reaver",
+   "name": "Reaver",
+   "category": "wireless",
+   "description": "WPS security assessment.",
+   "usage": "reaver -i <iface> -b <bssid>",
+   "command": "reaver -h",
+   "upstream": "https://github.com/t6x/reaver-wps-fork-t6x"
+  },
+  {
+   "id": "nikto",
+   "name": "Nikto",
+   "category": "web",
+   "description": "Web server scanner.",
+   "usage": "nikto -h https://<target>",
+   "command": "nikto -Help",
+   "upstream": "https://github.com/sullo/nikto"
+  },
+  {
+   "id": "sqlmap",
+   "name": "sqlmap",
+   "category": "web",
+   "description": "SQL injection detection and testing.",
+   "usage": "sqlmap -u 'https://<target>/?id=1'",
+   "command": "sqlmap -h",
+   "upstream": "https://sqlmap.org"
+  },
+  {
+   "id": "wpscan",
+   "name": "WPScan",
+   "category": "web",
+   "description": "WordPress security scanner.",
+   "usage": "wpscan --url https://<target>",
+   "command": "wpscan --help",
+   "upstream": "https://github.com/wpscanteam/wpscan"
+  },
+  {
+   "id": "metasploit",
+   "name": "Metasploit Framework",
+   "category": "exploit",
+   "description": "Exploitation and validation framework.",
+   "usage": "msfconsole",
+   "command": "msfconsole -h",
+   "upstream": "https://github.com/rapid7/metasploit-framework"
+  },
+  {
+   "id": "searchsploit",
+   "name": "SearchSploit",
+   "category": "exploit",
+   "description": "Offline Exploit-DB search.",
+   "usage": "searchsploit <term>",
+   "command": "searchsploit -h",
+   "upstream": "https://gitlab.com/exploit-database/exploitdb"
+  },
+  {
+   "id": "john",
+   "name": "John the Ripper",
+   "category": "password",
+   "description": "Password strength auditing.",
+   "usage": "john hashes.txt",
+   "command": "john --help",
+   "upstream": "https://www.openwall.com/john/"
+  },
+  {
+   "id": "hashcat",
+   "name": "hashcat",
+   "category": "password",
+   "description": "GPU/CPU password recovery.",
+   "usage": "hashcat -m 0 hashes.txt wordlist.txt",
+   "command": "hashcat --help",
+   "upstream": "https://hashcat.net"
+  },
+  {
+   "id": "hydra",
+   "name": "THC Hydra",
+   "category": "password",
+   "description": "Network login auditing.",
+   "usage": "hydra -l user -P list.txt ssh://<target>",
+   "command": "hydra -h",
+   "upstream": "https://github.com/vanhauser-thc/thc-hydra"
+  },
+  {
+   "id": "binwalk",
+   "name": "Binwalk",
+   "category": "forensics",
+   "description": "Firmware analysis and extraction.",
+   "usage": "binwalk -e firmware.bin",
+   "command": "binwalk --help",
+   "upstream": "https://github.com/ReFirmLabs/binwalk"
+  },
+  {
+   "id": "volatility",
+   "name": "Volatility 3",
+   "category": "forensics",
+   "description": "Memory forensics.",
+   "usage": "vol -f mem.raw windows.info",
+   "command": "vol -h",
+   "upstream": "https://github.com/volatilityfoundation/volatility3"
+  },
+  {
+   "id": "radare2",
+   "name": "radare2",
+   "category": "reverse",
+   "description": "Reverse engineering framework.",
+   "usage": "r2 ./binary",
+   "command": "r2 -h",
+   "upstream": "https://github.com/radareorg/radare2"
+  },
+  {
+   "id": "gdb",
+   "name": "GDB",
+   "category": "reverse",
+   "description": "GNU debugger.",
+   "usage": "gdb ./binary",
+   "command": "gdb --help",
+   "upstream": "https://www.sourceware.org/gdb/"
+  },
+  {
+   "id": "tshark",
+   "name": "TShark",
+   "category": "sniff",
+   "description": "Packet capture and analysis (Wireshark CLI).",
+   "usage": "tshark -i <iface>",
+   "command": "tshark -h",
+   "upstream": "https://www.wireshark.org"
+  },
+  {
+   "id": "bettercap",
+   "name": "bettercap",
+   "category": "sniff",
+   "description": "Network attack and monitoring framework.",
+   "usage": "bettercap -iface <iface>",
+   "command": "bettercap -h",
+   "upstream": "https://github.com/bettercap/bettercap"
+  }
+ ]
+}

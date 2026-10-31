@@ -1,4 +1,4 @@
-# Victorious ANDRAX
+# VictorDrax
 
 An Android app (Kotlin + Jetpack Compose) that will help you set up and launch the
 **ANDRAX-NG** penetration-testing environment from
@@ -22,7 +22,7 @@ You need JDK 17 and the Android SDK (API 34).
 ./gradlew assembleDebug
 ```
 The APK ends up in `app/build/outputs/apk/debug/`. Every push also builds it on
-GitHub Actions; download it from the run's **Artifacts** (`victorious-andrax-debug-apk`).
+GitHub Actions; download it from the run's **Artifacts** (`victordrax-debug-apk`).
 
 ## Signing
 `keystore/debug.keystore` is a **debug-only** key (passwords `android`/`android`),
@@ -39,3 +39,10 @@ Not affiliated with SNAKE Security. Upstream files are linked, not copied — se
 
 ## License
 Our code is released under the **Apache License 2.0** (same as afos-ng). See [LICENSE](LICENSE).
+
+## Terminal: VictorSuite
+
+This app has no built-in terminal. "Open terminal" and every tool launch open a session in
+[VictorSuite](https://github.com/Victorious93/VictorSuite) through its Termux-compatible `RUN_COMMAND` intent.
+When the ANDRAX-NG chroot is installed, the session enters it. If VictorSuite has not allowed external apps, this
+app opens VictorSuite and copies the command to the clipboard instead. See [docs/victorsuite-integration.md](docs/victorsuite-integration.md).
