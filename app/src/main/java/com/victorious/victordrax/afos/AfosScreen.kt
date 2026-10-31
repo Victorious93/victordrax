@@ -24,7 +24,7 @@ import com.victorious.victordrax.ui.Section
 fun AfosScreen(settings: Settings) {
     val ctx = LocalContext.current
     val repo = remember { runCatching { Afos.parseRepository(ctx.assets.open("afos_packages.yaml").bufferedReader().readText()) }.getOrDefault(emptyList()) }
-    AfosBrowser(repo, settings) { cmd, title -> VictorSuiteLauncher.launch(ctx, requestFor(settings, cmd, title)) }
+    AfosBrowser(repo, settings) { cmd, title -> VictorSuiteLauncher.launch(ctx, requestFor(ctx, settings, cmd, title)) }
 }
 
 @Composable

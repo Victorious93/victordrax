@@ -139,10 +139,10 @@ fun PlaybookScreen(id: Long, settings: Settings, back: () -> Unit) {
             resolved.forEach { r ->
                 Row {
                     Text(r.command, Modifier.weight(1f).padding(top = 12.dp), fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
-                    TextButton({ launch.handle(VictorSuiteLauncher.launch(ctx, requestFor(settings, r.command, r.label))) }) { Text("Run") }
+                    TextButton({ launch.handle(VictorSuiteLauncher.launch(ctx, requestFor(ctx, settings, r.command, r.label))) }) { Text("Run") }
                 }
             }
-            Button({ resolved.forEach { r -> launch.handle(VictorSuiteLauncher.launch(ctx, requestFor(settings, r.command, r.label))) } },
+            Button({ resolved.forEach { r -> launch.handle(VictorSuiteLauncher.launch(ctx, requestFor(ctx, settings, r.command, r.label))) } },
                 enabled = guard == RunGuard.Ok && resolved.isNotEmpty()) {
                 Icon(Icons.Default.PlayArrow, null); Text("Run all in VictorSuite") }
             Text("Each step opens its own VictorSuite session.", style = MaterialTheme.typography.bodySmall)
