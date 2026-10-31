@@ -118,7 +118,8 @@ fun EngagementDetailScreen(id: Long, settings: Settings, repo: SettingsRepo, go:
                 OutlinedButton({ exportMd.launch("${cur.name}.md") }) { Text("Export .md") }
                 OutlinedButton({ exportPdf.launch("${cur.name}.pdf") }) { Text("Export .pdf") }
             }
-            Button({ go("engagement/$id/report") }, Modifier.fillMaxWidth()) { Text("Findings & report") }
+            Button({ go("engagement/$id/findings") }, Modifier.fillMaxWidth()) { Text("Findings manager") }
+            OutlinedButton({ go("engagement/$id/report") }, Modifier.fillMaxWidth()) { Text("Pro report & CVSS") }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton({ go("engagement/$id/scans") }, Modifier.weight(1f)) { Text("Scan results") }
                 OutlinedButton({ go("workflows") }, Modifier.weight(1f)) { Text("Workflows") }

@@ -57,6 +57,46 @@ data class Finding(
     val evidence: String = "",
     val remediation: String = "",
     val createdAt: Long = System.currentTimeMillis(),
+    // ---- v3: findings manager ----
+    val description: String = "",
+    /** Comma-separated free-form tags, e.g. "web,auth". Use [tagList]. */
+    val tags: String = "",
+    /** Affected target / asset (host, URL, app). Should be inside the engagement scope. */
+    val target: String = "",
+    /** FindingStatus name: OPEN/CONFIRMED/FIXED/WONT_FIX. */
+    val status: String = "OPEN",
+    /** Newline-separated SAF content:// URIs (files / screenshots) attached as evidence. */
+    val evidencePaths: String = "",
+    /** Epoch millis of the last edit; 0 = never edited (use createdAt). */
+    val updatedAt: Long = 0,
+    /** Optional [ToolRun] this finding was spawned from (no FK so deleting a run keeps the finding). */
+    val sourceRunId: Long? = null,
+) {
+    fun tagList(): List<String> = tags.split(',').map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+    fun evidenceList(): List<String> = evidencePaths.lines().map { it.trim() }.filter { it.isNotEmpty() }
+}
+
+/**
+ * A tool or workflow step launched against an engagement. VictorDrax hands commands to VictorSuite,
+ * so [output] is only filled when the operator pastes it (or a future integration captures it).
+ */
+@Entity(
+    tableName = "tool_runs",
+    foreignKeys = [ForeignKey(entity = Engagement::class, parentColumns = ["id"], childColumns = ["engagementId"], onDelete = ForeignKey.CASCADE)],
+    indices = [Index("engagementId")],
+)
+@kotlinx.serialization.Serializable
+data class ToolRun(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val engagementId: Long,
+    /** Tool name or workflow step label. */
+    val label: String,
+    val command: String,
+    /** "tool" or "workflow:<playbook name>". */
+    val source: String = "tool",
+    val target: String = "",
+    val startedAt: Long = System.currentTimeMillis(),
+    val output: String = "",
 )
 
 @Entity(tableName = "playbooks")
@@ -130,6 +170,18 @@ interface FindingDao {
     @Delete suspend fun delete(f: Finding)
     @Query("SELECT * FROM findings") suspend fun allOnce(): List<Finding>
     @Insert(onConflict = androidx.room.OnConflictStrategy.REPLACE) suspend fun upsert(f: Finding): Long
+    @Query("SELECT * FROM findings WHERE id = :id") suspend fun get(id: Long): Finding?
+    @Query("SELECT COUNT(*) FROM findings WHERE engagementId = :id") suspend fun countFor(id: Long): Int
+}
+
+@Dao
+interface ToolRunDao {
+    @Query("SELECT * FROM tool_runs WHERE engagementId = :id ORDER BY startedAt DESC") fun forEngagement(id: Long): Flow<List<ToolRun>>
+    @Query("SELECT * FROM tool_runs WHERE engagementId = :id ORDER BY startedAt ASC") suspend fun forEngagementOnce(id: Long): List<ToolRun>
+    @Query("SELECT * FROM tool_runs WHERE id = :id") suspend fun get(id: Long): ToolRun?
+    @Insert suspend fun insert(r: ToolRun): Long
+    @Update suspend fun update(r: ToolRun)
+    @Delete suspend fun delete(r: ToolRun)
 }
 
 @Dao
@@ -161,14 +213,15 @@ interface ScanDao {
 }
 
 @Database(
-    entities = [Engagement::class, Note::class, Finding::class, Playbook::class, PlaybookStep::class, ScanImport::class],
-    version = 2, exportSchema = true,
+    entities = [Engagement::class, Note::class, Finding::class, Playbook::class, PlaybookStep::class, ScanImport::class, ToolRun::class],
+    version = 3, exportSchema = true,
 )
 abstract class AppDb : RoomDatabase() {
     abstract fun engagements(): EngagementDao
     abstract fun findings(): FindingDao
     abstract fun playbooks(): PlaybookDao
     abstract fun scans(): ScanDao
+    abstract fun toolRuns(): ToolRunDao
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -184,10 +237,24 @@ abstract class AppDb : RoomDatabase() {
             }
         }
 
+        /** v3: findings manager columns + tool_runs table. Additive only; existing findings become OPEN. */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                listOf("description", "tags", "target", "evidencePaths").forEach {
+                    db.execSQL("ALTER TABLE findings ADD COLUMN $it TEXT NOT NULL DEFAULT ''")
+                }
+                db.execSQL("ALTER TABLE findings ADD COLUMN status TEXT NOT NULL DEFAULT 'OPEN'")
+                db.execSQL("ALTER TABLE findings ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE findings ADD COLUMN sourceRunId INTEGER DEFAULT NULL")
+                db.execSQL("CREATE TABLE IF NOT EXISTS tool_runs (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, engagementId INTEGER NOT NULL, label TEXT NOT NULL, command TEXT NOT NULL, source TEXT NOT NULL, target TEXT NOT NULL, startedAt INTEGER NOT NULL, output TEXT NOT NULL, FOREIGN KEY(engagementId) REFERENCES engagements(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_tool_runs_engagementId ON tool_runs(engagementId)")
+            }
+        }
+
         @Volatile private var inst: AppDb? = null
         fun get(ctx: Context): AppDb = inst ?: synchronized(this) {
             inst ?: Room.databaseBuilder(ctx.applicationContext, AppDb::class.java, "victorious.db")
-                .addMigrations(MIGRATION_1_2).build().also { inst = it }
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { inst = it }
         }
     }
 }
