@@ -176,8 +176,9 @@ private fun Host(nav: NavHostController, settings: Settings, repo: SettingsRepo,
         composable("more") { MoreScreen(go) }
         composable("install") { InstallScreen(settings, repo) }
         composable("desktop") { DesktopScreen(settings) }
-        composable("settings") { SettingsScreen(settings, repo, prefs) }
+        composable("settings") { SettingsScreen(settings, repo, prefs) { nav.navigate("wireless") } }
         composable("about") { AboutScreen() }
+        composable("wireless") { com.victorious.victordrax.pairing.WirelessPairingScreen() }
     }
 }
 
@@ -194,7 +195,7 @@ fun MoreScreen(go: (String) -> Unit) {
 }
 
 @Composable
-fun SettingsScreen(settings: Settings, repo: SettingsRepo, prefs: Prefs) {
+fun SettingsScreen(settings: Settings, repo: SettingsRepo, prefs: Prefs, openWireless: () -> Unit = {}) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var path by remember(settings.installPath) { mutableStateOf(settings.installPath) }
@@ -262,9 +263,10 @@ fun SettingsScreen(settings: Settings, repo: SettingsRepo, prefs: Prefs) {
                     TextButton({ shizukuStatus = ShizukuGate.status(ctx) }) { Text("Refresh") }
                 }
             }
+            TextButton(openWireless) { Text("Wireless debugging pairing helper →") }
             Text(
                 "Shizuku is for AUTHORIZED testing on devices you own. " +
-                    "ADB/wireless-debugging setup is done in the Shizuku app.",
+                    "Start it via Wireless debugging (helper above) or the Shizuku app.",
                 style = MaterialTheme.typography.bodySmall,
             )
         }
