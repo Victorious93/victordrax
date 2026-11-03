@@ -5,7 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import com.victorious.victordrax.data.Root
+import com.victorious.victordrax.data.ShellResult
 import com.victorious.victordrax.data.Validation
+import com.victorious.victordrax.privilege.Privilege
+import com.victorious.victordrax.privilege.PrivilegeMode
 
 /** Starts/stops a VNC server inside the chroot (expects TigerVNC/TightVNC's `vncserver` in the rootfs). */
 object Vnc {
@@ -21,8 +24,11 @@ object Vnc {
         return "${Root.chrootPrefix(root)} USER=root /bin/sh -c 'vncserver -kill $display'"
     }
 
-    suspend fun start(root: String, display: String) = Root.exec(startCommand(root, display))
-    suspend fun stop(root: String, display: String) = Root.exec(stopCommand(root, display))
+    suspend fun start(root: String, display: String, mode: PrivilegeMode = PrivilegeMode.AUTO): ShellResult =
+        Privilege.exec(mode, startCommand(root, display))
+
+    suspend fun stop(root: String, display: String, mode: PrivilegeMode = PrivilegeMode.AUTO): ShellResult =
+        Privilege.exec(mode, stopCommand(root, display))
 
     /** Opens any installed VNC viewer that handles vnc:// URIs. Returns false if none is installed. */
     fun openViewer(ctx: Context, display: String): Boolean = try {

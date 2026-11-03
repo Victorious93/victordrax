@@ -85,7 +85,7 @@ fun InstallScreen(settings: Settings, repo: SettingsRepo) {
             confirmUninstall = false
             scope.launch {
                 InstallWorker.cancel(ctx); InstallWorker.partFile(ctx).delete()
-                val err = if (settings.envInstalled) Uninstaller.uninstall(settings.installPath) else null
+                val err = if (settings.envInstalled) Uninstaller.uninstall(settings.installPath, settings.privilegeMode) else null
                 if (err == null) repo.setInstalled(false)
                 status = err ?: "Uninstalled."
             }

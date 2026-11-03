@@ -12,7 +12,7 @@ An Android app (Kotlin + Jetpack Compose) that will help you set up and launch t
 - **Status** – shows whether root (`su`) is detected, your CPU architecture, and free storage.
 - **Install environment** – explains the requirements and links to the official
   upstream sources. *Automatic download/setup is not built yet (TODO).*
-- **Settings** – choose an install path, reset the legal acceptance.
+- **Settings** – theme, install path, privilege mode (root / Shizuku / auto), Shizuku status, legal reset.
 - **About** – legal notice, credits, and license.
 
 ## Batch 2 features (v0.2.0)
@@ -48,6 +48,9 @@ sign a release. No release keys or secrets are in this repo.
 
 Not affiliated with SNAKE Security. Upstream files are linked, not copied — see
 [NOTICE](NOTICE) and [THIRD_PARTY.md](THIRD_PARTY.md).
+
+## Shizuku (optional)
+VictorDrax can use [Shizuku](https://shizuku.rikka.app/) as an elevated-shell backend when classic `su` is unavailable. Preference order in **Auto** mode: root → Shizuku → unprivileged. ANDRAX-NG chroot install / VNC still need **uid 0** (Magisk `su`, or Shizuku via [Sui](https://github.com/RikkaApps/Sui)). Shizuku itself is not bundled; install it separately and grant permission from Settings.
 
 ## License
 Our code is released under the **Apache License 2.0** (same as afos-ng). See [LICENSE](LICENSE).
