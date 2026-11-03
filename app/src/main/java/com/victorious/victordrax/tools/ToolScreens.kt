@@ -20,6 +20,7 @@ import com.victorious.victordrax.data.Settings
 import com.victorious.victordrax.data.SettingsRepo
 import com.victorious.victordrax.db.AppDb
 import com.victorious.victordrax.terminal.*
+import com.victorious.victordrax.findings.FindingsRepo
 import com.victorious.victordrax.tools.spec.ToolSpecs
 import com.victorious.victordrax.ui.*
 import kotlinx.coroutines.launch
@@ -101,7 +102,12 @@ fun ToolDetailScreen(id: String, settings: Settings, repo: SettingsRepo, openScr
                         !e.isAuthorized -> "Active engagement \"${e.name}\" has no complete authorization record (who, date, document)."
                         else -> null
                     }
-                    if (warn == null) launch()
+                    if (warn == null) {
+                        val res = VictorSuiteLauncher.launch(ctx, requestFor(settings, tool.command, tool.name))
+                        term.handle(res)
+                        if (e != null && (res is LaunchResult.Sent || res is LaunchResult.FellBack))
+                            FindingsRepo(AppDb.get(ctx)).recordRun(e.id, tool.name, tool.command, "tool")
+                    }
                 }
             }) { Icon(Icons.Default.Terminal, null); Spacer(Modifier.width(6.dp)); Text("Open in VictorSuite") }
             OutlinedButton({ scope.launch { repo.toggleFavorite(tool.id) } }) {

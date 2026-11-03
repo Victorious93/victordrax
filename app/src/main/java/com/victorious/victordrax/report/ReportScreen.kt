@@ -19,6 +19,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.victorious.victordrax.db.AppDb
 import com.victorious.victordrax.db.Finding
+import com.victorious.victordrax.findings.FindingLogic
+import com.victorious.victordrax.findings.FindingStatus
+import com.victorious.victordrax.findings.FindingsRepo
+import com.victorious.victordrax.findings.SaveResult
 import com.victorious.victordrax.ui.GradientTitle
 import com.victorious.victordrax.ui.Section
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +48,8 @@ fun ReportBuilderScreen(engagementId: Long) {
     val scope = rememberCoroutineScope()
     var editing by remember { mutableStateOf<Finding?>(null) }
     var msg by remember { mutableStateOf<String?>(null) }
+    var saveError by remember { mutableStateOf<String?>(null) }
+    val repo = remember(db) { FindingsRepo(db) }
     val cur = e ?: return
     var summary by remember(cur.id) { mutableStateOf(cur.execSummary) }
 
@@ -92,8 +98,10 @@ fun ReportBuilderScreen(engagementId: Long) {
         }
     }
     editing?.let { f ->
-        FindingEditor(f, onDismiss = { editing = null }, onDelete = if (f.id != 0L) ({ scope.launch { db.findings().delete(f); editing = null } }) else null) { saved ->
-            scope.launch { if (saved.id == 0L) db.findings().insert(saved) else db.findings().update(saved); editing = null }
+        FindingEditor(f, onDismiss = { editing = null; saveError = null }, onDelete = if (f.id != 0L) ({ scope.launch { repo.delete(f); editing = null } }) else null, error = saveError) { saved ->
+            scope.launch {
+                when (val r = repo.save(saved)) { is SaveResult.Saved -> { editing = null; saveError = null }; is SaveResult.Rejected -> saveError = r.reason }
+            }
         }
     }
 }
@@ -137,13 +145,27 @@ fun CvssCalculator(initial: String, onVector: (String) -> Unit) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun FindingEditor(initial: Finding, onDismiss: () -> Unit, onDelete: (() -> Unit)?, onSave: (Finding) -> Unit) {
+fun FindingEditor(initial: Finding, onDismiss: () -> Unit, onDelete: (() -> Unit)?, error: String? = null, onSave: (Finding) -> Unit) {
+    val ctx = LocalContext.current
     var title by remember { mutableStateOf(initial.title) }
     var sev by remember { mutableStateOf(Severity.fromLabel(initial.severity)) }
+    var status by remember { mutableStateOf(FindingStatus.of(initial.status)) }
+    var description by remember { mutableStateOf(initial.description) }
+    var target by remember { mutableStateOf(initial.target) }
+    var tags by remember { mutableStateOf(initial.tags) }
     var vector by remember { mutableStateOf(initial.cvssVector) }
     var evidence by remember { mutableStateOf(initial.evidence) }
+    val files = remember { mutableStateListOf<String>().apply { addAll(initial.evidenceList()) } }
     var remediation by remember { mutableStateOf(initial.remediation) }
     var showCalc by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    // SAF picker: any file or screenshot. Persist read access so the URI survives reboots.
+    val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        uris.forEach { uri ->
+            runCatching { ctx.contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            if (uri.toString() !in files) files.add(uri.toString())
+        }
+    }
     AlertDialog(onDismissRequest = onDismiss, title = { Text(if (initial.id == 0L) "New finding" else "Edit finding") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
@@ -152,16 +174,42 @@ fun FindingEditor(initial: Finding, onDismiss: () -> Unit, onDelete: (() -> Unit
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Severity.entries.forEach { s -> FilterChip(sev == s, { sev = s }, { Text(s.label, color = severityColor(s)) }) }
                 }
+                Text("Status", style = MaterialTheme.typography.labelMedium)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    FindingStatus.entries.forEach { st -> FilterChip(status == st, { status = st }, { Text(st.label) }) }
+                }
+                OutlinedTextField(target, { target = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text("Target / asset (in scope)") })
+                OutlinedTextField(tags, { tags = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text("Tags (comma-separated)") })
+                OutlinedTextField(description, { description = it }, Modifier.fillMaxWidth(), label = { Text("Description") }, minLines = 2)
                 OutlinedTextField(vector, { vector = it }, Modifier.fillMaxWidth(), label = { Text("CVSS 3.1 vector (optional)") },
                     isError = vector.isNotBlank() && Cvss.parseVector(vector) == null, textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace))
                 TextButton({ showCalc = !showCalc }) { Text(if (showCalc) "Hide calculator" else "CVSS calculator") }
                 if (showCalc) CvssCalculator(vector) { v -> vector = v; Cvss.severityOf(v)?.let { sev = it } }
-                OutlinedTextField(evidence, { evidence = it }, Modifier.fillMaxWidth(), label = { Text("Evidence") }, minLines = 3)
+                OutlinedTextField(evidence, { evidence = it }, Modifier.fillMaxWidth(), label = { Text("Evidence (text / tool output)") }, minLines = 3,
+                    textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace))
+                Text("Evidence files (${files.size})", style = MaterialTheme.typography.labelMedium)
+                files.toList().forEach { u ->
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Text(evidenceName(u), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, maxLines = 1)
+                        IconButton({ files.remove(u) }) { Icon(Icons.Default.Delete, "Remove attachment") }
+                    }
+                }
+                OutlinedButton({ pick.launch(arrayOf("image/*", "text/*", "application/pdf", "*/*")) }) { Text("Attach file / screenshot") }
                 OutlinedTextField(remediation, { remediation = it }, Modifier.fillMaxWidth(), label = { Text("Remediation") }, minLines = 2)
-                onDelete?.let { TextButton(it) { Icon(Icons.Default.Delete, null); Text("Delete", color = MaterialTheme.colorScheme.error) } }
+                error?.let { Text("⚠ $it", color = MaterialTheme.colorScheme.secondary) }
+                onDelete?.let { TextButton({ confirmDelete = true }) { Icon(Icons.Default.Delete, null); Text("Delete", color = MaterialTheme.colorScheme.error) } }
             }
         },
-        confirmButton = { TextButton({ onSave(initial.copy(title = title.trim(), severity = sev.label, cvssVector = vector.trim(), evidence = evidence, remediation = remediation)) },
+        confirmButton = { TextButton({ onSave(initial.copy(title = title.trim(), severity = sev.label, status = status.name, description = description,
+                target = target.trim(), tags = FindingLogic.normalizeTags(tags), cvssVector = vector.trim(), evidence = evidence,
+                evidencePaths = files.joinToString("\n"), remediation = remediation)) },
             enabled = title.isNotBlank() && (vector.isBlank() || Cvss.parseVector(vector) != null)) { Text("Save") } },
         dismissButton = { TextButton(onDismiss) { Text("Cancel") } })
+    if (confirmDelete) AlertDialog(onDismissRequest = { confirmDelete = false }, title = { Text("Delete finding?") },
+        text = { Text("\"${initial.title}\" will be removed. Attached files are not touched.") },
+        confirmButton = { TextButton({ confirmDelete = false; onDelete?.invoke() }) { Text("Delete", color = MaterialTheme.colorScheme.error) } },
+        dismissButton = { TextButton({ confirmDelete = false }) { Text("Cancel") } })
 }
+
+/** Readable tail of a content:// URI for display. */
+fun evidenceName(uri: String): String = android.net.Uri.decode(uri).substringAfterLast('/').substringAfterLast(':').ifBlank { uri }
