@@ -44,12 +44,17 @@ import com.victorious.victordrax.tools.ToolLibraryScreen
 import com.victorious.victordrax.ui.*
 import com.victorious.victordrax.afos.AfosScreen
 import com.victorious.victordrax.backup.BackupScreen
+import com.victorious.victordrax.beef.BeefScreen
 import com.victorious.victordrax.report.ReportBuilderScreen
 import com.victorious.victordrax.findings.FindingsScreen
 import com.victorious.victordrax.scan.ScanDetailScreen
 import com.victorious.victordrax.scan.ScanListScreen
 import com.victorious.victordrax.workflow.PlaybookListScreen
 import com.victorious.victordrax.workflow.PlaybookScreen
+import com.victorious.victordrax.privilege.Privilege
+import com.victorious.victordrax.privilege.PrivilegeMode
+import com.victorious.victordrax.shizuku.ShizukuGate
+import com.victorious.victordrax.shizuku.ShizukuStatus
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -114,7 +119,7 @@ fun AppShell(settings: Settings, repo: SettingsRepo, prefs: Prefs, pendingRoute:
     fun go(route: String) = nav.navigate(route) { launchSingleTop = true; popUpTo("dashboard") { saveState = true }; restoreState = true }
     LaunchedEffect(pendingRoute.value) { pendingRoute.value?.let { go(it); pendingRoute.value = null } }
     val selected = primaryDests.firstOrNull { current?.startsWith(it.route) == true }?.route
-        ?: if (current in listOf("install", "desktop", "settings", "about", "workflows", "packages", "backup") || current?.startsWith("playbook/") == true) "more" else if (current?.startsWith("tool/") == true) "tools"
+        ?: if (current in listOf("install", "desktop", "settings", "about", "workflows", "packages", "backup", "beef") || current?.startsWith("playbook/") == true) "more" else if (current?.startsWith("tool/") == true) "tools"
         else if (current?.startsWith("engagement/") == true || current?.startsWith("scan/") == true) "engagements" else null
 
     BoxWithConstraints {
@@ -177,11 +182,13 @@ private fun Host(nav: NavHostController, settings: Settings, repo: SettingsRepo,
         }
         composable("packages") { AfosScreen(settings) }
         composable("backup") { BackupScreen() }
+        composable("beef") { BeefScreen(settings) }
         composable("more") { MoreScreen(go) }
         composable("install") { InstallScreen(settings, repo) }
         composable("desktop") { DesktopScreen(settings) }
         composable("settings") { SettingsScreen(settings, repo, prefs) }
         composable("about") { AboutScreen() }
+        composable("schedules") { com.victorious.victordrax.schedule.ScheduleScreen(settings) }
     }
 }
 
@@ -189,9 +196,10 @@ private fun Host(nav: NavHostController, settings: Settings, repo: SettingsRepo,
 fun MoreScreen(go: (String) -> Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         GradientTitle("More")
-        listOf(Triple("Workflows", Icons.Default.PlaylistPlay, "workflows"), Triple("Packages (afos-ng)", Icons.Default.Inventory, "packages"),
+        listOf(Triple("Workflows", Icons.Default.PlaylistPlay, "workflows"), Triple("Scan scheduler", Icons.Default.Schedule, "schedules"), Triple("Packages (afos-ng)", Icons.Default.Inventory, "packages"),
             Triple("Install environment", Icons.Default.Download, "install"), Triple("Desktop (VNC)", Icons.Default.DesktopWindows, "desktop"),
             Triple("Backup & restore", Icons.Default.Lock, "backup"),
+            Triple("BeEF-XSS control panel", Icons.Default.BugReport, "beef"),
             Triple("Settings", Icons.Default.Settings, "settings"), Triple("About & legal", Icons.Default.Info, "about"))
             .forEach { (l, i, r) -> QuickTile(l, i, Modifier.fillMaxWidth()) { go(r) } }
     }
@@ -199,15 +207,78 @@ fun MoreScreen(go: (String) -> Unit) {
 
 @Composable
 fun SettingsScreen(settings: Settings, repo: SettingsRepo, prefs: Prefs) {
+    val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var path by remember(settings.installPath) { mutableStateOf(settings.installPath) }
     var display by remember(settings.vncDisplay) { mutableStateOf(settings.vncDisplay) }
+    var shizukuStatus by remember { mutableStateOf(ShizukuGate.status(ctx)) }
+    DisposableEffect(Unit) {
+        ShizukuGate.ensureHooked()
+        val listener: (ShizukuStatus) -> Unit = { shizukuStatus = it }
+        ShizukuGate.addStatusListener(listener)
+        onDispose { ShizukuGate.removeStatusListener(listener) }
+    }
+    val snap = remember(settings.privilegeMode, shizukuStatus) { Privilege.snapshot(ctx, settings.privilegeMode) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         GradientTitle("Settings")
         Section("Theme") {
             AppTheme.entries.forEach { t ->
                 Row { RadioButton(settings.theme == t, { scope.launch { repo.setTheme(t) } }); Text(t.label, Modifier.padding(top = 12.dp)) }
             }
+        }
+        Section("Privilege mode") {
+            Text(
+                "In-app elevated shell (installer, VNC, diagnostics). " +
+                    "Chroot still needs uid 0 (su, or Shizuku via Sui).",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Spacer(Modifier.height(6.dp))
+            PrivilegeMode.entries.forEach { m ->
+                Row {
+                    RadioButton(settings.privilegeMode == m, { scope.launch { repo.setPrivilegeMode(m) } })
+                    Column(Modifier.padding(top = 8.dp, end = 8.dp)) {
+                        Text(m.label)
+                        Text(m.description, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+            Text(
+                "Active backend: ${snap.backend.name}" +
+                    (if (snap.canChroot) " · chroot OK" else " · chroot needs uid 0"),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Section("Shizuku") {
+            Text("Status: ${ShizukuGate.label(shizukuStatus)}")
+            if (shizukuStatus == ShizukuStatus.GRANTED) {
+                val uid = snap.shizukuUid
+                Text(
+                    "Server uid=$uid" + if (uid == 0) " (root / Sui)" else " (ADB shell — not full root)",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                when (shizukuStatus) {
+                    ShizukuStatus.NOT_INSTALLED ->
+                        Button({ ShizukuGate.openDownload(ctx) }) { Text("Get Shizuku") }
+                    ShizukuStatus.NOT_RUNNING, ShizukuStatus.PRE_V11 ->
+                        Button({ ShizukuGate.openManager(ctx) }) { Text("Open Shizuku") }
+                    ShizukuStatus.DENIED ->
+                        Button({ ShizukuGate.requestPermission() }) { Text("Request permission") }
+                    ShizukuStatus.GRANTED ->
+                        OutlinedButton({ ShizukuGate.openManager(ctx) }) { Text("Open Shizuku") }
+                }
+                if (shizukuStatus == ShizukuStatus.DENIED || shizukuStatus == ShizukuStatus.NOT_RUNNING) {
+                    TextButton({ shizukuStatus = ShizukuGate.status(ctx) }) { Text("Refresh") }
+                }
+            }
+            Text(
+                "Shizuku is for AUTHORIZED testing on devices you own. " +
+                    "ADB/wireless-debugging setup is done in the Shizuku app.",
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
         Section("Install path") {
             OutlinedTextField(path, { path = it }, Modifier.fillMaxWidth(), singleLine = true, isError = !Validation.isSafePath(path))
@@ -235,9 +306,11 @@ fun AboutScreen() {
             Text("• ANDRAX — original by Weidsom Nascimento / The Cracker Technology\n" +
                 "• ANDRAX-NG — SNAKE Security\n" +
                 "• afos-ng — SNAKE Security, Apache License 2.0\n" +
-                "• Terminal: VictorSuite (separate app, launched via intents)")
+                "• Terminal: VictorSuite (separate app, launched via intents)\n" +
+                "• Shizuku / Sui — RikkaApps (optional elevated shell without full root)")
             LinkButton("github.com/snakesec", "https://github.com/snakesec")
             LinkButton("VictorSuite", "https://github.com/Victorious93/VictorSuite")
+            LinkButton("Shizuku", "https://shizuku.rikka.app/")
         }
         Section("License") {
             Text("VictorDrax is licensed under the Apache License 2.0. " +
