@@ -103,7 +103,7 @@ fun ToolDetailScreen(id: String, settings: Settings, repo: SettingsRepo, openScr
                         else -> null
                     }
                     if (warn == null) {
-                        val res = VictorSuiteLauncher.launch(ctx, requestFor(settings, tool.command, tool.name))
+                        val res = VictorSuiteLauncher.launch(ctx, requestFor(ctx, settings, tool.command, tool.name))
                         term.handle(res)
                         if (e != null && (res is LaunchResult.Sent || res is LaunchResult.FellBack))
                             FindingsRepo(AppDb.get(ctx)).recordRun(e.id, tool.name, tool.command, "tool")
