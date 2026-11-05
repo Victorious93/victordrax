@@ -43,10 +43,8 @@ private fun EngagementBar(e: Engagement?) {
     Text(text, color = color, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 4.dp))
 }
 
-private fun requestArgv(settings: Settings, argv: List<String>, title: String) =
-    TerminalRequest(command = null, title = title,
-        chroot = settings.envInstalled && com.victorious.victordrax.data.Root.suBinaryPresent(),
-        chrootPath = settings.installPath, argv = argv)
+private fun requestArgv(ctx: android.content.Context, settings: Settings, argv: List<String>, title: String) =
+    com.victorious.victordrax.terminal.requestFor(ctx, settings, null, title, argv)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -93,7 +91,7 @@ fun ToolFormScreen(id: String, settings: Settings, repo: SettingsRepo) {
                 e == null -> error = "Select an active engagement first."
                 !e.isAuthorized -> error = "The active engagement has no authorization on record."
                 result is BuildResult.Err -> error = result.message
-                result is BuildResult.Ok -> term.handle(VictorSuiteLauncher.launch(ctx, requestArgv(settings, result.argv, spec.name)))
+                result is BuildResult.Ok -> term.handle(VictorSuiteLauncher.launch(ctx, requestArgv(ctx, settings, result.argv, spec.name)))
             }
         }, enabled = preview != null) {
             Icon(Icons.Default.Terminal, null); Spacer(Modifier.width(6.dp)); Text("Run in VictorSuite")
@@ -211,7 +209,7 @@ fun MetasploitScreen(settings: Settings, repo: SettingsRepo) {
                 e == null -> error = "Select an active engagement first."
                 !e.isAuthorized -> error = "The active engagement has no authorization on record."
                 built is MsfResource.Result.Err -> error = built.message
-                built is MsfResource.Result.Ok -> term.handle(VictorSuiteLauncher.launch(ctx, requestArgv(settings, built.argv, "Metasploit")))
+                built is MsfResource.Result.Ok -> term.handle(VictorSuiteLauncher.launch(ctx, requestArgv(ctx, settings, built.argv, "Metasploit")))
             }
         }, enabled = built is MsfResource.Result.Ok) {
             Icon(Icons.Default.Terminal, null); Spacer(Modifier.width(6.dp)); Text("Launch msfconsole")
@@ -252,9 +250,9 @@ fun LaunchOnlyScreen(id: String, settings: Settings) {
                         e == null -> error = "Select an active engagement first."
                         !e.isAuthorized -> error = "The active engagement has no authorization on record."
                         opt.command == null -> term.handle(VictorSuiteLauncher.launch(ctx,
-                            requestArgv(settings, listOf("dumpcap", "-D"), spec.name + " (list interfaces)")))
+                            requestArgv(ctx, settings, listOf("dumpcap", "-D"), spec.name + " (list interfaces)")))
                         else -> term.handle(VictorSuiteLauncher.launch(ctx,
-                            requestArgv(settings, listOf(opt.command), spec.name)))
+                            requestArgv(ctx, settings, listOf(opt.command), spec.name)))
                     }
                 }) { Icon(Icons.Default.DesktopWindows, null); Spacer(Modifier.width(6.dp)); Text(if (opt.desktop) "Open in desktop" else "Start capture helper") }
             }

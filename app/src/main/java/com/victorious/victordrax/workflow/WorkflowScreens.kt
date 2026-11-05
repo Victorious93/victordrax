@@ -89,7 +89,7 @@ fun PlaybookScreen(id: Long, settings: Settings, back: () -> Unit) {
     val runs = remember(db) { FindingsRepo(db) }
     /** Launch one resolved step; when VictorSuite accepted it (or fell back to clipboard), log it as a tool run. */
     fun run(label: String, command: String) {
-        val res = VictorSuiteLauncher.launch(ctx, requestFor(settings, command, label))
+        val res = VictorSuiteLauncher.launch(ctx, requestFor(ctx, settings, command, label))
         launch.handle(res)
         if (res is LaunchResult.Sent || res is LaunchResult.FellBack) eng?.let { e ->
             scope.launch { runs.recordRun(e.id, label, command, "workflow:${p.name}", values["target"].orEmpty()) }
@@ -150,10 +150,10 @@ fun PlaybookScreen(id: Long, settings: Settings, back: () -> Unit) {
             resolved.forEach { r ->
                 Row {
                     Text(r.command, Modifier.weight(1f).padding(top = 12.dp), fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
-                    TextButton({ run(r.label, r.command) }) { Text("Run") }
+                    TextButton({ launch.handle(VictorSuiteLauncher.launch(ctx, requestFor(ctx, settings, r.command, r.label))) }) { Text("Run") }
                 }
             }
-            Button({ resolved.forEach { r -> run(r.label, r.command) } },
+            Button({ resolved.forEach { r -> launch.handle(VictorSuiteLauncher.launch(ctx, requestFor(ctx, settings, r.command, r.label))) } },
                 enabled = guard == RunGuard.Ok && resolved.isNotEmpty()) {
                 Icon(Icons.Default.PlayArrow, null); Text("Run all in VictorSuite") }
             Text("Each step opens its own VictorSuite session.", style = MaterialTheme.typography.bodySmall)

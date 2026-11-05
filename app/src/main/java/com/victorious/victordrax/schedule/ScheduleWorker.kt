@@ -95,7 +95,7 @@ class ScheduleWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(c
         ScheduleNotifier.post(ctx, id, "Scheduled scan starting", "${s.label} → ${s.target} (${eng!!.name})", ongoing = true)
         val settings = SettingsRepo(ctx).current()
         val steps = Playbooks.resolve(s.commands.mapIndexed { i, c -> "${s.label} ${i + 1}" to c }, mapOf("target" to s.target.trim()))
-        val result = dispatch(ctx, steps.map { requestFor(settings, it.command, it.label) })
+        val result = dispatch(ctx, steps.map { requestFor(ctx, settings, it.command, it.label) })
 
         val updated = s.copy(lastRunAt = now, lastResult = result)
         val next = Scheduler.nextRunAt(updated, now + 1)

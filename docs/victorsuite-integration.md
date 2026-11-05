@@ -63,3 +63,16 @@ through documented intents, the same way third-party apps use Termux's `RUN_COMM
 VictorSuite. *(This is an engineering note, not legal advice.)*
 
 The VictorSuite repo itself was not changed.
+
+## Privilege backend for VictorSuite sessions
+
+The launch contract above is unchanged. Only the chroot wrapper inside the `bash -c` script now follows **Settings → Privilege mode**, using the same `PrivilegeResolver` that in-app runs use:
+
+| Resolved backend | Chroot session wrapper |
+|---|---|
+| Root (su) | `su -c '<chroot …>'` (same as before) |
+| Shizuku via Sui (uid 0) | `rish -c '<chroot …>'` |
+| Shizuku via ADB (uid 2000) | blocked with a clear message, because uid 2000 can't chroot |
+| Unprivileged | host VictorSuite shell with no wrapper |
+
+VictorSuite runs in its own process, so it can't use VictorDrax's in-process `ShizukuShell` binder. `rish` is Shizuku's supported terminal bridge. In the Shizuku app, use "Use Shizuku in terminal apps" → Export, then put `rish` and `rish_shizuku.dex` on VictorSuite's `$PATH`. If `rish` is missing, the session prints how to set it up and drops to a host shell.

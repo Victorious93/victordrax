@@ -9,6 +9,7 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 import com.victorious.victordrax.data.Root
 import com.victorious.victordrax.data.Validation
+import com.victorious.victordrax.privilege.PrivilegeBackend
 
 /** Something that can open a terminal session running a command. */
 interface TerminalLauncher {
@@ -29,6 +30,13 @@ data class TerminalRequest(
      * (URLs with ?/&, wordlist paths, etc.) are handled safely without a character allow-list.
      */
     val argv: List<String>? = null,
+    /**
+     * Privilege backend resolved from the app's PrivilegeMode (same resolver as in-app tool runs).
+     * Only used to wrap chroot sessions: ROOT -> `su -c`, SHIZUKU -> `rish -c`, NONE -> no wrapper.
+     */
+    val backend: PrivilegeBackend = PrivilegeBackend.ROOT,
+    /** From PrivilegeResolver.canChroot: false for ADB Shizuku (uid 2000) or unprivileged. */
+    val canChroot: Boolean = true,
 )
 
 sealed interface LaunchResult {
@@ -78,14 +86,19 @@ object VictorSuiteLauncher : TerminalLauncher {
     fun argvIsSafe(argv: List<String>): Boolean =
         argv.isNotEmpty() && argv.all { it.isNotEmpty() && it.none { c -> c == '\u0000' || c == '\n' || c == '\r' } }
 
+    /** Shizuku's terminal bridge. Must be exported into VictorSuite's PATH from the Shizuku app. */
+    const val RISH = "rish"
+    const val RISH_MISSING = "rish (Shizuku shell) not found in VictorSuite PATH. In Shizuku: Use Shizuku in terminal apps -> Export files, then copy rish + rish_shizuku.dex into \$PREFIX/bin."
+    const val ADB_SHIZUKU_NO_CHROOT = "Shizuku is running in ADB mode (uid 2000), which cannot chroot into ANDRAX-NG. Use root (su) or Sui, or switch Privilege mode."
+
     /** The bash -c script that VictorSuite runs. Pure, so it is unit tested. */
     fun script(r: TerminalRequest): String {
         if (r.argv != null) return scriptFromArgv(r)
         r.command?.let { require(isSafeCommand(it)) { "unsupported characters in command" } }
         val inner = r.command?.let { "$it; exec /bin/bash -l" } ?: "exec /bin/bash -l"
         return if (r.chroot) {
-            require(Validation.isSafePath(r.chrootPath))
-            "su -c '${Root.chrootPrefix(r.chrootPath)} /bin/bash -lc \"$inner\"'"
+            requireChroot(r)
+            elevate(r.backend, "${Root.chrootPrefix(r.chrootPath)} /bin/bash -lc \"$inner\"")
         } else r.command?.let { "$it; exec bash -l" } ?: "exec bash -l"
     }
 
@@ -95,13 +108,30 @@ object VictorSuiteLauncher : TerminalLauncher {
         require(argvIsSafe(argv)) { "unsupported characters in argument" }
         val cmd = shJoin(argv)
         return if (r.chroot) {
-            require(Validation.isSafePath(r.chrootPath))
+            requireChroot(r)
             val inner = "$cmd; exec /bin/bash -l"
-            val full = Root.chrootPrefix(r.chrootPath) + " /bin/bash -lc " + shQuote(inner)
-            "su -c " + shQuote(full)
+            elevate(r.backend, Root.chrootPrefix(r.chrootPath) + " /bin/bash -lc " + shQuote(inner))
         } else {
             "$cmd; exec bash -l"
         }
+    }
+
+    private fun requireChroot(r: TerminalRequest) {
+        require(Validation.isSafePath(r.chrootPath))
+        require(r.backend != PrivilegeBackend.NONE) { "Chroot session needs root or Shizuku (Sui); privilege is unavailable." }
+        require(r.canChroot) { ADB_SHIZUKU_NO_CHROOT }
+    }
+
+    /**
+     * Wrap a uid-0 command for the resolved backend. VictorSuite runs in its own process, so it
+     * cannot reach VictorDrax's in-process ShizukuShell binder; Shizuku's supported terminal
+     * bridge is `rish`, which execs through the same Shizuku server (Sui = uid 0).
+     */
+    fun elevate(backend: PrivilegeBackend, full: String): String = when (backend) {
+        PrivilegeBackend.ROOT -> "su -c " + shQuote(full)
+        PrivilegeBackend.SHIZUKU ->
+            "command -v $RISH >/dev/null 2>&1 || { echo ${shQuote(RISH_MISSING)}; exec bash -l; }; $RISH -c " + shQuote(full)
+        PrivilegeBackend.NONE -> full
     }
 
     fun intent(r: TerminalRequest): Intent = Intent(ACTION_RUN_COMMAND).setClassName(PACKAGE, SERVICE)
