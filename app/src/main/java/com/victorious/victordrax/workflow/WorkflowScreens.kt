@@ -18,7 +18,9 @@ import com.victorious.victordrax.data.Settings
 import com.victorious.victordrax.db.AppDb
 import com.victorious.victordrax.db.Playbook
 import com.victorious.victordrax.db.PlaybookStep
+import com.victorious.victordrax.findings.FindingsRepo
 import com.victorious.victordrax.terminal.InstallVictorSuiteDialog
+import com.victorious.victordrax.terminal.LaunchResult
 import com.victorious.victordrax.terminal.VictorSuiteLauncher
 import com.victorious.victordrax.terminal.rememberTerminalLaunchState
 import com.victorious.victordrax.terminal.requestFor
@@ -84,6 +86,15 @@ fun PlaybookScreen(id: Long, settings: Settings, back: () -> Unit) {
     val cmds = steps.map { it.command }
     val vars = Playbooks.variablesIn(cmds)
     val guard = Playbooks.guard(eng, cmds, values.toMap())
+    val runs = remember(db) { FindingsRepo(db) }
+    /** Launch one resolved step; when VictorSuite accepted it (or fell back to clipboard), log it as a tool run. */
+    fun run(label: String, command: String) {
+        val res = VictorSuiteLauncher.launch(ctx, requestFor(settings, command, label))
+        launch.handle(res)
+        if (res is LaunchResult.Sent || res is LaunchResult.FellBack) eng?.let { e ->
+            scope.launch { runs.recordRun(e.id, label, command, "workflow:${p.name}", values["target"].orEmpty()) }
+        }
+    }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         GradientTitle(p.name)
