@@ -21,6 +21,7 @@ import com.victorious.victordrax.data.SettingsRepo
 import com.victorious.victordrax.db.AppDb
 import com.victorious.victordrax.terminal.*
 import com.victorious.victordrax.findings.FindingsRepo
+import com.victorious.victordrax.capture.RunOutputStore
 import com.victorious.victordrax.tools.spec.ToolSpecs
 import com.victorious.victordrax.ui.*
 import kotlinx.coroutines.launch
@@ -103,10 +104,12 @@ fun ToolDetailScreen(id: String, settings: Settings, repo: SettingsRepo, openScr
                         else -> null
                     }
                     if (warn == null) {
-                        val res = VictorSuiteLauncher.launch(ctx, requestFor(ctx, settings, tool.command, tool.name))
+                        // Capture file path (shared dir) so VictorSuite tees this run's output for import.
+                        val capture = e?.let { RunOutputStore.fileFor(settings.runOutputDir, System.currentTimeMillis()) }
+                        val res = VictorSuiteLauncher.launch(ctx, requestFor(ctx, settings, tool.command, tool.name, captureFile = capture))
                         term.handle(res)
                         if (e != null && (res is LaunchResult.Sent || res is LaunchResult.FellBack))
-                            FindingsRepo(AppDb.get(ctx)).recordRun(e.id, tool.name, tool.command, "tool")
+                            FindingsRepo(AppDb.get(ctx)).recordRun(e.id, tool.name, tool.command, "tool", outputPath = capture ?: "")
                     }
                 }
             }) { Icon(Icons.Default.Terminal, null); Spacer(Modifier.width(6.dp)); Text("Open in VictorSuite") }

@@ -27,6 +27,17 @@ All offensive actions are tied to an engagement with a recorded authorization (w
 
 Screenshots (rendered headlessly with Robolectric, not on a device): [`docs/screenshots/`](docs/screenshots/). Logo: [`docs/brand/`](docs/brand/).
 
+## Run output capture
+
+Tool and workflow runs are recorded in the `tool_runs` table against an engagement. Because VictorSuite
+sessions are interactive, the launched command is wrapped so VictorSuite **tees stdout+stderr into a
+per-run log file** (under the shared folder in Settings → *Run output capture*, default
+`/sdcard/VictorDrax/runs`) and appends an exit sentinel. From **Findings → tool runs**, *Read output*
+imports the log directly (where storage access allows) or *Import .log* pulls it in via the Storage
+Access Framework; the run then shows its captured output and exit code, and a finding spawned from the
+run carries the real output as evidence. Non-interactive `Privilege.exec` runs are captured directly.
+The capture folder must be reachable by both apps on a real device.
+
 ## Build it
 You need JDK 17 and the Android SDK (API 34).
 

@@ -26,9 +26,12 @@ data class Settings(
     val activeEngagementId: Long = 0L,
     val vncDisplay: String = ":1",
     val privilegeMode: PrivilegeMode = PrivilegeMode.AUTO,
+    /** Shared dir (reachable by both the app and VictorSuite) where tool runs tee their output logs. */
+    val runOutputDir: String = DEFAULT_RUN_OUTPUT_DIR,
 )
 
 const val DEFAULT_INSTALL_PATH = "/data/local/andrax"
+const val DEFAULT_RUN_OUTPUT_DIR = "/sdcard/VictorDrax/runs"
 
 class SettingsRepo(private val ctx: Context) {
     private object K {
@@ -41,6 +44,7 @@ class SettingsRepo(private val ctx: Context) {
         val active = longPreferencesKey("active_engagement")
         val vnc = stringPreferencesKey("vnc_display")
         val privilege = stringPreferencesKey("privilege_mode")
+        val runDir = stringPreferencesKey("run_output_dir")
     }
 
     val settings: Flow<Settings> = ctx.dataStore.data.map { p ->
@@ -54,6 +58,7 @@ class SettingsRepo(private val ctx: Context) {
             activeEngagementId = p[K.active] ?: 0L,
             vncDisplay = p[K.vnc] ?: ":1",
             privilegeMode = p[K.privilege]?.let { runCatching { PrivilegeMode.valueOf(it) }.getOrNull() } ?: PrivilegeMode.AUTO,
+            runOutputDir = p[K.runDir] ?: DEFAULT_RUN_OUTPUT_DIR,
         )
     }
 
@@ -69,4 +74,5 @@ class SettingsRepo(private val ctx: Context) {
     suspend fun setActiveEngagement(id: Long) = ctx.dataStore.edit { it[K.active] = id }
     suspend fun setVncDisplay(v: String) = ctx.dataStore.edit { it[K.vnc] = v }
     suspend fun setPrivilegeMode(m: PrivilegeMode) = ctx.dataStore.edit { it[K.privilege] = m.name }
+    suspend fun setRunOutputDir(v: String) = ctx.dataStore.edit { it[K.runDir] = v.trim() }
 }
