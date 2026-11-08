@@ -27,6 +27,11 @@ All offensive actions are tied to an engagement with a recorded authorization (w
 
 Screenshots (rendered headlessly with Robolectric, not on a device): [`docs/screenshots/`](docs/screenshots/). Logo: [`docs/brand/`](docs/brand/).
 
+
+## MITM / traffic proxy console
+
+More → **MITM proxy console**. Start/stop `mitmdump` through VictorSuite on a chosen listen port, follow in-app CA-cert install steps for the device under test, then paste or import a flow dump (JSONL, JSON array, or mitmdump `--flow-detail` text). Filter by host/method/status, inspect headers/body previews, and create a finding from a flow. Config and captured flows live in separate DataStore files (not `tool_runs`). Framed for the operator's own authorized test traffic only — no credential-harvesting automation.
+
 ## Build it
 You need JDK 17 and the Android SDK (API 34).
 

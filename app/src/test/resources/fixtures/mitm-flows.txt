@@ -1,0 +1,6 @@
+>> GET https://api.lab.local/v1/health
+<< 200 OK 15b application/json
+>> POST https://api.lab.local/v1/login
+<< 401 Unauthorized application/json
+GET http://static.lab.local/logo.png
+<< 200 OK image/png
