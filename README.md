@@ -38,6 +38,17 @@ Access Framework; the run then shows its captured output and exit code, and a fi
 run carries the real output as evidence. Non-interactive `Privilege.exec` runs are captured directly.
 The capture folder must be reachable by both apps on a real device.
 
+## Payload & listener builder
+
+More → **Payload & listener builder**. For **authorized testing only**, tied to an authorized
+engagement. Build an `msfvenom` payload (pick payload type, LHOST/LPORT, output format, optional stock
+encoder + iterations, output folder and filename) and the matching `exploit/multi/handler` listener,
+then hand each to VictorSuite. The builder only *generates* a payload and *starts a listener* for the
+operator's own test — it has **no** auto-deploy, spreading, persistence or evasion features. Every
+value is validated (payload/format allow-lists, LHOST, LPORT 1–65535, encoder/iterations, filename,
+absolute output path) and the launcher single-quote escapes each argv token. The payload build is
+recorded as a tool run and its output captured (see *Run output capture*).
+
 ## Build it
 You need JDK 17 and the Android SDK (API 34).
 

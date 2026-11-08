@@ -119,7 +119,7 @@ fun AppShell(settings: Settings, repo: SettingsRepo, prefs: Prefs, pendingRoute:
     fun go(route: String) = nav.navigate(route) { launchSingleTop = true; popUpTo("dashboard") { saveState = true }; restoreState = true }
     LaunchedEffect(pendingRoute.value) { pendingRoute.value?.let { go(it); pendingRoute.value = null } }
     val selected = primaryDests.firstOrNull { current?.startsWith(it.route) == true }?.route
-        ?: if (current in listOf("install", "desktop", "settings", "about", "workflows", "packages", "backup", "beef") || current?.startsWith("playbook/") == true) "more" else if (current?.startsWith("tool/") == true) "tools"
+        ?: if (current in listOf("install", "desktop", "settings", "about", "workflows", "packages", "backup", "beef", "payload") || current?.startsWith("playbook/") == true) "more" else if (current?.startsWith("tool/") == true) "tools"
         else if (current?.startsWith("engagement/") == true || current?.startsWith("scan/") == true) "engagements" else null
 
     BoxWithConstraints {
@@ -190,6 +190,7 @@ private fun Host(nav: NavHostController, settings: Settings, repo: SettingsRepo,
         composable("about") { AboutScreen() }
         composable("schedules") { com.victorious.victordrax.schedule.ScheduleScreen(settings) }
         composable("wireless") { com.victorious.victordrax.pairing.WirelessPairingScreen() }
+        composable("payload") { com.victorious.victordrax.tools.PayloadBuilderScreen(settings) }
     }
 }
 
@@ -201,6 +202,7 @@ fun MoreScreen(go: (String) -> Unit) {
             Triple("Install environment", Icons.Default.Download, "install"), Triple("Desktop (VNC)", Icons.Default.DesktopWindows, "desktop"),
             Triple("Backup & restore", Icons.Default.Lock, "backup"),
             Triple("BeEF-XSS control panel", Icons.Default.BugReport, "beef"),
+            Triple("Payload & listener builder", Icons.Default.Memory, "payload"),
             Triple("Settings", Icons.Default.Settings, "settings"), Triple("About & legal", Icons.Default.Info, "about"))
             .forEach { (l, i, r) -> QuickTile(l, i, Modifier.fillMaxWidth()) { go(r) } }
     }
