@@ -78,7 +78,9 @@ data class Finding(
 
 /**
  * A tool or workflow step launched against an engagement. VictorDrax hands commands to VictorSuite,
- * so [output] is only filled when the operator pastes it (or a future integration captures it).
+ * which tees stdout+stderr into a per-run log file ([outputPath]); the app imports that file into
+ * [output] and [exitCode] (see [com.victorious.victordrax.capture.RunCapture]). [output] may also be
+ * filled from a non-interactive Privilege.exec run, or pasted by the operator.
  */
 @Entity(
     tableName = "tool_runs",
@@ -97,6 +99,13 @@ data class ToolRun(
     val target: String = "",
     val startedAt: Long = System.currentTimeMillis(),
     val output: String = "",
+    // ---- v4: run output capture ----
+    /** Exit code once the run finished (sentinel parsed from the capture file); null while running. */
+    val exitCode: Int? = null,
+    /** Epoch millis the captured output was imported / the run completed; 0 = not yet. */
+    val finishedAt: Long = 0,
+    /** Absolute path of the capture log VictorSuite writes stdout+stderr+exit to (empty = not captured). */
+    val outputPath: String = "",
 )
 
 @Entity(tableName = "playbooks")
@@ -214,7 +223,7 @@ interface ScanDao {
 
 @Database(
     entities = [Engagement::class, Note::class, Finding::class, Playbook::class, PlaybookStep::class, ScanImport::class, ToolRun::class],
-    version = 3, exportSchema = true,
+    version = 4, exportSchema = true,
 )
 abstract class AppDb : RoomDatabase() {
     abstract fun engagements(): EngagementDao
@@ -251,10 +260,19 @@ abstract class AppDb : RoomDatabase() {
             }
         }
 
+        /** v4: tool-run output capture columns (exit code, finished timestamp, capture file path). Additive. */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE tool_runs ADD COLUMN exitCode INTEGER DEFAULT NULL")
+                db.execSQL("ALTER TABLE tool_runs ADD COLUMN finishedAt INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE tool_runs ADD COLUMN outputPath TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         @Volatile private var inst: AppDb? = null
         fun get(ctx: Context): AppDb = inst ?: synchronized(this) {
             inst ?: Room.databaseBuilder(ctx.applicationContext, AppDb::class.java, "victorious.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { inst = it }
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { inst = it }
         }
     }
 }

@@ -212,6 +212,7 @@ fun SettingsScreen(settings: Settings, repo: SettingsRepo, prefs: Prefs, openWir
     val scope = rememberCoroutineScope()
     var path by remember(settings.installPath) { mutableStateOf(settings.installPath) }
     var display by remember(settings.vncDisplay) { mutableStateOf(settings.vncDisplay) }
+    var runDir by remember(settings.runOutputDir) { mutableStateOf(settings.runOutputDir) }
     var shizukuStatus by remember { mutableStateOf(ShizukuGate.status(ctx)) }
     DisposableEffect(Unit) {
         ShizukuGate.ensureHooked()
@@ -290,6 +291,15 @@ fun SettingsScreen(settings: Settings, repo: SettingsRepo, prefs: Prefs, openWir
         Section("VNC display") {
             OutlinedTextField(display, { display = it }, Modifier.fillMaxWidth(), singleLine = true, isError = !Validation.isVncDisplay(display))
             Button({ scope.launch { repo.setVncDisplay(display) } }, enabled = Validation.isVncDisplay(display)) { Text("Save display") }
+        }
+        Section("Run output capture") {
+            Text("Shared folder where tool/workflow runs write their captured output. VictorSuite tees " +
+                "stdout+stderr here and the app imports it into the run record. Must be reachable by both apps.",
+                style = MaterialTheme.typography.bodySmall)
+            OutlinedTextField(runDir, { runDir = it }, Modifier.fillMaxWidth(), singleLine = true, isError = !Validation.isSafePath(runDir))
+            Button({ scope.launch { repo.setRunOutputDir(runDir) } }, enabled = Validation.isSafePath(runDir)) { Text("Save folder") }
+            Text("On a real device the app may need storage access to read it directly; otherwise use " +
+                "“Import .log” on a run in Findings.", style = MaterialTheme.typography.bodySmall)
         }
         Section("Legal") {
             Text("Re-show the legal notice on next launch.")
