@@ -25,6 +25,10 @@ All offensive actions are tied to an engagement with a recorded authorization (w
 - **afos-ng packages** — browse/search the bundled afos-ng catalog; install/update/list run `afos` inside the ANDRAX-NG chroot via VictorSuite (needs a real rooted device with the environment installed). Installed state is marked by pasting `afos -l` output.
 - **Encrypted backup/restore** — Storage Access Framework file, AES-256-GCM, key from PBKDF2-HMAC-SHA256 (210k iterations, random salt/IV). Restore can merge or replace. A wrong passphrase changes nothing.
 
+## In-app manual / help
+
+Every Victorious APK ships a full in-app how-to manual. Open it from **More → Manual / Help**. It has a searchable, sectioned table of contents and per-topic pages covering getting started, the legal/authorization model and scope, privilege modes, Shizuku + wireless debugging, the VictorSuite terminal, tools, engagements, findings, reports, the scan scheduler, the BeEF panel, afos-ng packages, the VNC desktop, backup/restore, the installer, and troubleshooting. Where useful a topic can deep-link straight to the relevant app screen. Content lives as Markdown in [`app/src/main/assets/manual/`](app/src/main/assets/manual/) with a `manifest.json`, parsed and searched by a pure (unit-tested) content model and rendered by a tiny built-in Markdown renderer — no extra libraries.
+
 Screenshots (rendered headlessly with Robolectric, not on a device): [`docs/screenshots/`](docs/screenshots/). Logo: [`docs/brand/`](docs/brand/).
 
 ## Build it
