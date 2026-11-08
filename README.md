@@ -27,6 +27,11 @@ All offensive actions are tied to an engagement with a recorded authorization (w
 
 Screenshots (rendered headlessly with Robolectric, not on a device): [`docs/screenshots/`](docs/screenshots/). Logo: [`docs/brand/`](docs/brand/).
 
+
+## Network discovery dashboard
+
+More → **Network discovery**. Pick an authorized engagement and an in-scope target, launch `nmap` with `-oX` through VictorSuite (profiles: quick top-ports, service/version, OS guess, scripts), then paste or import the XML. The dashboard shows hosts (up/down), open ports/services/versions and OS guess, with filters and a one-tap "create finding" that pre-fills the findings manager. Results are stored in a separate DataStore file (not `tool_runs` / Room).
+
 ## Build it
 You need JDK 17 and the Android SDK (API 34).
 
