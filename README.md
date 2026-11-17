@@ -57,6 +57,8 @@ Not affiliated with SNAKE Security. Upstream files are linked, not copied — se
 ## Shizuku (optional)
 VictorDrax can use [Shizuku](https://shizuku.rikka.app/) as an elevated-shell backend when classic `su` is unavailable. Preference order in **Auto** mode: root → Shizuku → unprivileged. ANDRAX-NG chroot install / VNC still need **uid 0** (Magisk `su`, or Shizuku via [Sui](https://github.com/RikkaApps/Sui)). Shizuku itself is not bundled; install it separately and grant permission from Settings.
 
+Optional root module (Magisk/KernelSU/APatch) that mounts the chroot at boot: see [docs/root-module.md](docs/root-module.md).
+
 ## License
 Our code is released under the **Apache License 2.0** (same as afos-ng). See [LICENSE](LICENSE).
 
