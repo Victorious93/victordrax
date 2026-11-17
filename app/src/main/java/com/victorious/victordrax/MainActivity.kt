@@ -120,7 +120,7 @@ fun AppShell(settings: Settings, repo: SettingsRepo, prefs: Prefs, pendingRoute:
     fun go(route: String) = nav.navigate(route) { launchSingleTop = true; popUpTo("dashboard") { saveState = true }; restoreState = true }
     LaunchedEffect(pendingRoute.value) { pendingRoute.value?.let { go(it); pendingRoute.value = null } }
     val selected = primaryDests.firstOrNull { current?.startsWith(it.route) == true }?.route
-        ?: if (current in listOf("install", "desktop", "settings", "about", "workflows", "packages", "backup", "beef", "network", "schedules", "wireless") || current?.startsWith("playbook/") == true) "more" else if (current?.startsWith("tool/") == true) "tools"
+        ?: if (current in listOf("install", "desktop", "settings", "about", "workflows", "packages", "backup", "beef", "payload", "network", "schedules", "wireless") || current?.startsWith("playbook/") == true) "more" else if (current?.startsWith("tool/") == true) "tools"
         else if (current?.startsWith("engagement/") == true || current?.startsWith("scan/") == true) "engagements" else null
 
     BoxWithConstraints {
@@ -192,6 +192,7 @@ private fun Host(nav: NavHostController, settings: Settings, repo: SettingsRepo,
         composable("about") { AboutScreen() }
         composable("schedules") { com.victorious.victordrax.schedule.ScheduleScreen(settings) }
         composable("wireless") { com.victorious.victordrax.pairing.WirelessPairingScreen() }
+        composable("payload") { com.victorious.victordrax.tools.PayloadBuilderScreen(settings) }
     }
 }
 
@@ -203,6 +204,7 @@ fun MoreScreen(go: (String) -> Unit) {
             Triple("Install environment", Icons.Default.Download, "install"), Triple("Desktop (VNC)", Icons.Default.DesktopWindows, "desktop"),
             Triple("Backup & restore", Icons.Default.Lock, "backup"),
             Triple("BeEF-XSS control panel", Icons.Default.BugReport, "beef"),
+            Triple("Payload & listener builder", Icons.Default.Memory, "payload"),
             Triple("Network discovery", Icons.Default.TravelExplore, "network"),
             Triple("Settings", Icons.Default.Settings, "settings"), Triple("About & legal", Icons.Default.Info, "about"))
             .forEach { (l, i, r) -> QuickTile(l, i, Modifier.fillMaxWidth()) { go(r) } }
@@ -215,6 +217,7 @@ fun SettingsScreen(settings: Settings, repo: SettingsRepo, prefs: Prefs, openWir
     val scope = rememberCoroutineScope()
     var path by remember(settings.installPath) { mutableStateOf(settings.installPath) }
     var display by remember(settings.vncDisplay) { mutableStateOf(settings.vncDisplay) }
+    var runDir by remember(settings.runOutputDir) { mutableStateOf(settings.runOutputDir) }
     var shizukuStatus by remember { mutableStateOf(ShizukuGate.status(ctx)) }
     DisposableEffect(Unit) {
         ShizukuGate.ensureHooked()
@@ -293,6 +296,15 @@ fun SettingsScreen(settings: Settings, repo: SettingsRepo, prefs: Prefs, openWir
         Section("VNC display") {
             OutlinedTextField(display, { display = it }, Modifier.fillMaxWidth(), singleLine = true, isError = !Validation.isVncDisplay(display))
             Button({ scope.launch { repo.setVncDisplay(display) } }, enabled = Validation.isVncDisplay(display)) { Text("Save display") }
+        }
+        Section("Run output capture") {
+            Text("Shared folder where tool/workflow runs write their captured output. VictorSuite tees " +
+                "stdout+stderr here and the app imports it into the run record. Must be reachable by both apps.",
+                style = MaterialTheme.typography.bodySmall)
+            OutlinedTextField(runDir, { runDir = it }, Modifier.fillMaxWidth(), singleLine = true, isError = !Validation.isSafePath(runDir))
+            Button({ scope.launch { repo.setRunOutputDir(runDir) } }, enabled = Validation.isSafePath(runDir)) { Text("Save folder") }
+            Text("On a real device the app may need storage access to read it directly; otherwise use " +
+                "“Import .log” on a run in Findings.", style = MaterialTheme.typography.bodySmall)
         }
         Section("Legal") {
             Text("Re-show the legal notice on next launch.")
