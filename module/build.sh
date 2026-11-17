@@ -39,6 +39,7 @@ find "$STAGE/pkg" -exec touch -h -d "$EPOCH_DATE" {} +
 (cd "$STAGE/pkg" && find . -type f | sed 's|^\./||' | LC_ALL=C sort > "$STAGE/.all")
 
 mkdir -p "$OUT"
+OUT=$(cd "$OUT" && pwd)
 ZIP="$OUT/victordrax-root-module-$VERSION.zip"
 rm -f "$ZIP"
 (cd "$STAGE/pkg" && zip -X -D -9 -q "$ZIP" -@ < "$STAGE/.all")
