@@ -30,3 +30,34 @@ jobs:
           name: victordrax-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+  root-module:
+    name: Root module (shellcheck, build, verify)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ShellCheck module scripts
+        run: |
+          shellcheck --version
+          shellcheck -s sh module/*.sh module/system/bin/* module/META-INF/com/google/android/update-binary
+          shellcheck -s bash module/tests/run-tests.sh
+      - name: Validate module.prop
+        run: sh module/validate-prop.sh
+      - name: Module script tests (stubbed + real mounts)
+        run: VDX_REAL_MOUNT=1 bash module/tests/run-tests.sh
+      - name: Build module zip
+        run: sh module/build.sh module/build
+      - name: Verify build is deterministic
+        run: |
+          sh module/build.sh /tmp/second-build
+          a=$(sha256sum module/build/*.zip | cut -d' ' -f1)
+          b=$(sha256sum /tmp/second-build/*.zip | cut -d' ' -f1)
+          [ "$a" = "$b" ] || { echo "non-deterministic zip: $a != $b"; exit 1; }
+      - name: Verify zip contents
+        run: |
+          unzip -l module/build/*.zip
+          sh module/verify-zip.sh module/build/*.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: victordrax-root-module
+          path: module/build/*.zip
+          if-no-files-found: error

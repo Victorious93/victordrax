@@ -1,0 +1,6 @@
+id=victordrax
+name=VictorDrax Root Module
+version=v0.1.0
+versionCode=1
+author=Victorious93
+description=Optional helper for the VictorDrax app: idempotent ANDRAX-NG chroot bind mounts at boot plus victordrax-chroot / victordrax-mounts helpers. Authorized testing only.

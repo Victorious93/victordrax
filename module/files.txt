@@ -1,0 +1,10 @@
+META-INF/com/google/android/update-binary
+META-INF/com/google/android/updater-script
+common.sh
+customize.sh
+module.prop
+service.sh
+system/bin/victordrax-chroot
+system/bin/victordrax-mounts
+uninstall.sh
+victordrax.conf
