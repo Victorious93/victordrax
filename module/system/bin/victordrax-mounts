@@ -1,0 +1,33 @@
+#!/system/bin/sh
+# Manage the ANDRAX-NG chroot bind mounts. Usage: victordrax-mounts [status|mount|umount]
+MODDIR="${VDX_MODDIR:-/data/adb/modules/victordrax}"
+export VDX_MODDIR="$MODDIR"
+VDX_TAG=mounts
+export VDX_TAG
+
+if [ ! -f "$MODDIR/common.sh" ]; then
+  echo "victordrax-mounts: module files not found at $MODDIR" >&2
+  exit 1
+fi
+# shellcheck source=/dev/null
+. "$MODDIR/common.sh"
+
+case "${1:-status}" in
+  status)
+    vdx_status ;;
+  mount|umount)
+    if [ "$(id -u)" != "0" ]; then
+      echo "victordrax-mounts: root required (run via su)" >&2
+      exit 1
+    fi
+    if [ "$1" = "mount" ]; then
+      vdx_mount_all
+      _rc=$?
+      [ "$_rc" = "2" ] && echo "No ANDRAX-NG chroot found at $CHROOT_PATH" >&2
+      exit "$_rc"
+    fi
+    vdx_umount_all ;;
+  *)
+    echo "usage: victordrax-mounts [status|mount|umount]" >&2
+    exit 2 ;;
+esac

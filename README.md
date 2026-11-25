@@ -49,6 +49,10 @@ value is validated (payload/format allow-lists, LHOST, LPORT 1–65535, encoder/
 absolute output path) and the launcher single-quote escapes each argv token. The payload build is
 recorded as a tool run and its output captured (see *Run output capture*).
 
+## MITM / traffic proxy console
+
+More → **MITM proxy console**. Start/stop `mitmdump` through VictorSuite on a chosen listen port, follow in-app CA-cert install steps for the device under test, then paste or import a flow dump (JSONL, JSON array, or mitmdump `--flow-detail` text). Filter by host/method/status, inspect headers/body previews, and create a finding from a flow. Config and captured flows live in separate DataStore files (not `tool_runs`). Framed for the operator's own authorized test traffic only — no credential-harvesting automation.
+
 ## Network discovery dashboard
 
 More → **Network discovery**. Pick an authorized engagement and an in-scope target, launch `nmap` with `-oX` through VictorSuite (profiles: quick top-ports, service/version, OS guess, scripts), then paste or import the XML. The dashboard shows hosts (up/down), open ports/services/versions and OS guess, with filters and a one-tap "create finding" that pre-fills the findings manager. Results are stored in a separate DataStore file (not `tool_runs` / Room).
@@ -77,6 +81,8 @@ Not affiliated with SNAKE Security. Upstream files are linked, not copied — se
 
 ## Shizuku (optional)
 VictorDrax can use [Shizuku](https://shizuku.rikka.app/) as an elevated-shell backend when classic `su` is unavailable. Preference order in **Auto** mode: root → Shizuku → unprivileged. ANDRAX-NG chroot install / VNC still need **uid 0** (Magisk `su`, or Shizuku via [Sui](https://github.com/RikkaApps/Sui)). Shizuku itself is not bundled; install it separately and grant permission from Settings.
+
+Optional root module (Magisk/KernelSU/APatch) that mounts the chroot at boot: see [docs/root-module.md](docs/root-module.md).
 
 ## License
 Our code is released under the **Apache License 2.0** (same as afos-ng). See [LICENSE](LICENSE).

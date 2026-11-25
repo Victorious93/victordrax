@@ -1,0 +1,39 @@
+#!/system/bin/sh
+# Enter the ANDRAX-NG chroot (mounts are set up idempotently first).
+# Usage: victordrax-chroot [command [args...]]
+MODDIR="${VDX_MODDIR:-/data/adb/modules/victordrax}"
+export VDX_MODDIR="$MODDIR"
+VDX_TAG=chroot
+export VDX_TAG
+
+if [ ! -f "$MODDIR/common.sh" ]; then
+  echo "victordrax-chroot: module files not found at $MODDIR" >&2
+  exit 1
+fi
+# shellcheck source=/dev/null
+. "$MODDIR/common.sh"
+
+if [ "$(id -u)" != "0" ]; then
+  echo "victordrax-chroot: root required (run via su)" >&2
+  exit 1
+fi
+
+vdx_load_config
+if ! vdx_chroot_present; then
+  echo "victordrax-chroot: no ANDRAX-NG chroot found at $CHROOT_PATH" >&2
+  echo "Install the environment from the VictorDrax app or edit CHROOT_PATH in $VDX_USER_CONF" >&2
+  exit 1
+fi
+
+vdx_mount_all
+
+CH_PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+if [ "$#" -gt 0 ]; then
+  exec chroot "$CHROOT_PATH" /usr/bin/env -i HOME=/root USER=root TERM="${TERM:-xterm-256color}" PATH="$CH_PATH" "$@"
+fi
+if [ -x "$CHROOT_PATH/bin/bash" ]; then
+  CH_SHELL=/bin/bash
+else
+  CH_SHELL=/bin/sh
+fi
+exec chroot "$CHROOT_PATH" /usr/bin/env -i HOME=/root USER=root TERM="${TERM:-xterm-256color}" PATH="$CH_PATH" "$CH_SHELL" -l

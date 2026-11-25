@@ -20,3 +20,7 @@ This repository contains only original code. No upstream files are copied.
 
 - https://github.com/Victorious93/VictorSuite is a Termux-based terminal app. This app only sends it Android intents
   (`com.termux.RUN_COMMAND`). No VictorSuite or Termux source or binaries are included here.
+
+## mitmproxy / mitmdump (optional runtime)
+
+Not bundled. The MITM console launches `mitmdump` inside VictorSuite/ANDRAX when the operator has installed it. Upstream: https://mitmproxy.org/ (MIT License).
