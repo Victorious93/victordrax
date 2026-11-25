@@ -1,5 +1,7 @@
 package com.victorious.victordrax.findings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.victorious.victordrax.db.AppDb
 import com.victorious.victordrax.db.Finding
+import com.victorious.victordrax.capture.RunCapture
+import com.victorious.victordrax.capture.RunOutputStore
 import com.victorious.victordrax.report.FindingEditor
 import com.victorious.victordrax.report.FindingReport
 import com.victorious.victordrax.report.Severity
@@ -57,6 +61,15 @@ fun FindingsScreen(engagementId: Long, openReport: () -> Unit = {}) {
     var saveError by remember { mutableStateOf<String?>(null) }
     var sortOpen by remember { mutableStateOf(false) }
     var showRuns by remember { mutableStateOf(false) }
+    var importForRun by remember { mutableStateOf<Long?>(null) }
+    var runMsg by remember { mutableStateOf<String?>(null) }
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        val rid = importForRun; importForRun = null
+        if (uri != null && rid != null) scope.launch {
+            val raw = RunOutputStore.readUri(ctx, uri)
+            runMsg = if (raw != null && repo.attachOutput(rid, raw)) "Imported output for run #$rid." else "Could not read that file."
+        }
+    }
     val cur = e ?: return
     val shown = remember(all, query) { FindingLogic.apply(all, query) }
     val tags = remember(all) { FindingLogic.allTags(all) }
@@ -104,14 +117,34 @@ fun FindingsScreen(engagementId: Long, openReport: () -> Unit = {}) {
                 }
                 if (showRuns) Section("Tool & workflow runs") {
                     if (runs.isEmpty()) Text("No runs recorded yet. Launching a tool or playbook step with this engagement active records it here.", style = MaterialTheme.typography.bodySmall)
+                    runMsg?.let { Text(it, color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.bodySmall) }
                     runs.take(30).forEach { r ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text(r.label, fontWeight = FontWeight.SemiBold)
-                                Text(r.command, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall, maxLines = 2)
-                                Text("${r.source} · ${DateFormat.getDateTimeInstance().format(Date(r.startedAt))}", style = MaterialTheme.typography.labelSmall)
+                        Column(Modifier.padding(vertical = 2.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(r.label, fontWeight = FontWeight.SemiBold)
+                                    Text(r.command, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall, maxLines = 2)
+                                    val status = when {
+                                        r.finishedAt > 0 && r.exitCode != null -> "exit ${r.exitCode}"
+                                        r.output.isNotBlank() -> "output captured"
+                                        r.outputPath.isNotBlank() -> "awaiting output"
+                                        else -> "not captured"
+                                    }
+                                    Text("${r.source} · ${DateFormat.getDateTimeInstance().format(Date(r.startedAt))} · $status", style = MaterialTheme.typography.labelSmall)
+                                }
+                                TextButton({ editing = FindingsRepo.draftFromRun(r) }, enabled = cur.isAuthorized) { Text("→ Finding") }
                             }
-                            TextButton({ editing = FindingsRepo.draftFromRun(r) }, enabled = cur.isAuthorized) { Text("→ Finding") }
+                            if (r.output.isNotBlank()) Text(
+                                r.output.lineSequence().take(8).joinToString("\n") + if (r.output.lines().size > 8) "\n…" else "",
+                                fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(MaterialTheme.colorScheme.surfaceVariant).padding(6.dp))
+                            if (r.outputPath.isNotBlank()) Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                TextButton({ scope.launch {
+                                    val raw = RunOutputStore.readFile(r.outputPath)
+                                    runMsg = if (raw != null && repo.attachOutput(r.id, raw)) "Read output for run #${r.id}." else "Capture file not readable here — use Import."
+                                } }) { Text("Read output") }
+                                TextButton({ importForRun = r.id; importLauncher.launch("*/*") }) { Text("Import .log") }
+                            }
                         }
                     }
                 }
