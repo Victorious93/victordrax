@@ -99,4 +99,46 @@ class FindingsDaoTest {
         }
         m.query("SELECT COUNT(*) FROM tool_runs").use { c -> c.moveToFirst(); assertEquals(0, c.getInt(0)) }
     }
+
+    @Test fun migrate3to4() {
+        helper.createDatabase("mig4.db", 3).apply {
+            execSQL("INSERT INTO engagements (id,name,client,scope,authorizedBy,authorizedDate,authDocUri,createdAt,execSummary) VALUES (1,'E','C','10.0.0.1','',0,'',0,'')")
+            execSQL("INSERT INTO tool_runs (id,engagementId,label,command,source,target,startedAt,output) VALUES (1,1,'nmap','nmap -sV','tool','10.0.0.1',5,'')")
+            close()
+        }
+        val m = helper.runMigrationsAndValidate("mig4.db", 4, true, AppDb.MIGRATION_3_4)
+        m.query("SELECT exitCode, finishedAt, outputPath FROM tool_runs WHERE id=1").use { c ->
+            assertTrue(c.moveToFirst()); assertTrue(c.isNull(0)); assertEquals(0L, c.getLong(1)); assertEquals("", c.getString(2))
+        }
+    }
+
+    @Test fun attachOutputParsesAndStores() = runTest {
+        val eid = authorized()
+        val rid = repo.recordRun(eid, "nmap", "nmap -sV 10.0.0.5", "tool", "10.0.0.5", outputPath = "/sdcard/VictorDrax/runs/run-x.log")!!
+        now = 2_000L
+        assertTrue(repo.attachOutput(rid, "Nmap scan report\n22/tcp open ssh\n__VDX_EXIT__ 0"))
+        val run = db.toolRuns().get(rid)!!
+        assertEquals("Nmap scan report\n22/tcp open ssh", run.output)
+        assertEquals(0, run.exitCode)
+        assertEquals(2_000L, run.finishedAt)
+        assertEquals("/sdcard/VictorDrax/runs/run-x.log", run.outputPath)
+    }
+
+    @Test fun completeRunFromExecStoresShellResult() = runTest {
+        val eid = authorized()
+        val rid = repo.recordRun(eid, "id", "id", "tool")!!
+        now = 3_000L
+        assertTrue(repo.completeRunFromExec(rid, com.victorious.victordrax.data.ShellResult(0, "uid=0(root)\n")))
+        val run = db.toolRuns().get(rid)!!
+        assertEquals("uid=0(root)", run.output); assertEquals(0, run.exitCode); assertEquals(3_000L, run.finishedAt)
+    }
+
+    @Test fun draftFromRunIncludesCapturedOutput() {
+        val run = com.victorious.victordrax.db.ToolRun(id = 9, engagementId = 1, label = "nmap", command = "nmap -sV 10.0.0.5",
+            source = "tool", target = "10.0.0.5", output = "22/tcp open ssh", exitCode = 0, finishedAt = 10)
+        val f = FindingsRepo.draftFromRun(run)
+        assertTrue(f.evidence.contains("nmap -sV 10.0.0.5"))
+        assertTrue(f.evidence.contains("22/tcp open ssh"))
+        assertEquals(9L, f.sourceRunId)
+    }
 }

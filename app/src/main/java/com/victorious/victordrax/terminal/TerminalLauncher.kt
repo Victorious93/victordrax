@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import com.victorious.victordrax.data.Root
 import com.victorious.victordrax.data.Validation
 import com.victorious.victordrax.privilege.PrivilegeBackend
+import com.victorious.victordrax.capture.RunCapture
 
 /** Something that can open a terminal session running a command. */
 interface TerminalLauncher {
@@ -37,6 +38,12 @@ data class TerminalRequest(
     val backend: PrivilegeBackend = PrivilegeBackend.ROOT,
     /** From PrivilegeResolver.canChroot: false for ADB Shizuku (uid 2000) or unprivileged. */
     val canChroot: Boolean = true,
+    /**
+     * When set, VictorSuite tees stdout+stderr of the command into this host-side file and appends an
+     * exit sentinel, so the app can import the run's real output. Only applied to non-chroot sessions
+     * (a chroot's filesystem view differs). Must be an absolute [Validation.isSafePath] path.
+     */
+    val captureFile: String? = null,
 )
 
 sealed interface LaunchResult {
@@ -82,6 +89,15 @@ object VictorSuiteLauncher : TerminalLauncher {
     /** Join an argv into one safely-quoted shell command line. */
     fun shJoin(argv: List<String>): String = argv.joinToString(" ") { shQuote(it) }
 
+    /**
+     * Wrap [cmd] so its stdout+stderr are shown in the terminal AND tee'd to [file], with an exit
+     * sentinel appended so the app can detect completion and the exit code. Quote-safe; pure.
+     */
+    fun captureWrap(cmd: String, file: String): String {
+        val f = shQuote(file)
+        return "{ $cmd ; } 2>&1 | tee $f ; echo " + shQuote("${RunCapture.EXIT_MARKER} \${PIPESTATUS[0]}") + " >> $f"
+    }
+
     /** Reject values that cannot be carried even when quoted (NUL / newline would split or truncate). */
     fun argvIsSafe(argv: List<String>): Boolean =
         argv.isNotEmpty() && argv.all { it.isNotEmpty() && it.none { c -> c == '\u0000' || c == '\n' || c == '\r' } }
@@ -99,7 +115,10 @@ object VictorSuiteLauncher : TerminalLauncher {
         return if (r.chroot) {
             requireChroot(r)
             elevate(r.backend, "${Root.chrootPrefix(r.chrootPath)} /bin/bash -lc \"$inner\"")
-        } else r.command?.let { "$it; exec bash -l" } ?: "exec bash -l"
+        } else r.command?.let { c ->
+            val cap = r.captureFile?.also { require(Validation.isSafePath(it)) { "unsupported capture path" } }
+            if (cap != null) captureWrap(c, cap) + "; exec bash -l" else "$c; exec bash -l"
+        } ?: "exec bash -l"
     }
 
     /** argv path: every token is single-quote escaped; nesting is built inside-out so it is quote-safe. */
@@ -112,7 +131,8 @@ object VictorSuiteLauncher : TerminalLauncher {
             val inner = "$cmd; exec /bin/bash -l"
             elevate(r.backend, Root.chrootPrefix(r.chrootPath) + " /bin/bash -lc " + shQuote(inner))
         } else {
-            "$cmd; exec bash -l"
+            val cap = r.captureFile?.also { require(Validation.isSafePath(it)) { "unsupported capture path" } }
+            if (cap != null) captureWrap(cmd, cap) + "; exec bash -l" else "$cmd; exec bash -l"
         }
     }
 

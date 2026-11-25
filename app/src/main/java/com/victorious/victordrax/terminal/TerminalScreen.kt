@@ -41,14 +41,16 @@ class TerminalLaunchState {
 @Composable fun rememberTerminalLaunchState() = remember { TerminalLaunchState() }
 
 /** Same PrivilegeMode resolution as in-app runs (Privilege.exec / snapshot). */
-fun requestFor(ctx: Context, settings: Settings, command: String?, title: String, argv: List<String>? = null): TerminalRequest =
-    requestFor(Privilege.snapshot(ctx, settings.privilegeMode), settings.envInstalled, settings.installPath, command, title, argv)
+fun requestFor(ctx: Context, settings: Settings, command: String?, title: String, argv: List<String>? = null, captureFile: String? = null): TerminalRequest =
+    requestFor(Privilege.snapshot(ctx, settings.privilegeMode), settings.envInstalled, settings.installPath, command, title, argv, captureFile)
 
 /** Pure variant for tests. Chroot is requested whenever ANDRAX-NG is installed and some backend exists. */
-fun requestFor(snap: Privilege.Snapshot, envInstalled: Boolean, installPath: String, command: String?, title: String, argv: List<String>? = null) =
+fun requestFor(snap: Privilege.Snapshot, envInstalled: Boolean, installPath: String, command: String?, title: String, argv: List<String>? = null, captureFile: String? = null) =
     TerminalRequest(command, title,
         chroot = envInstalled && snap.backend != PrivilegeBackend.NONE,
-        chrootPath = installPath, argv = argv, backend = snap.backend, canChroot = snap.canChroot)
+        chrootPath = installPath, argv = argv, backend = snap.backend, canChroot = snap.canChroot,
+        // Capture only for non-chroot sessions (a chroot's filesystem view differs from the host path).
+        captureFile = captureFile?.takeIf { !(envInstalled && snap.backend != PrivilegeBackend.NONE) })
 
 @Composable
 fun InstallVictorSuiteDialog(state: TerminalLaunchState) {

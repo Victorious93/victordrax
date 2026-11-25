@@ -3,6 +3,8 @@ package com.victorious.victordrax.findings
 import com.victorious.victordrax.db.AppDb
 import com.victorious.victordrax.db.Finding
 import com.victorious.victordrax.db.ToolRun
+import com.victorious.victordrax.capture.RunCapture
+import com.victorious.victordrax.data.ShellResult
 import kotlinx.coroutines.flow.Flow
 
 sealed interface SaveResult {
@@ -31,11 +33,40 @@ class FindingsRepo(private val db: AppDb, private val clock: () -> Long = System
 
     suspend fun delete(f: Finding) = db.findings().delete(f)
 
-    /** Records a launched tool/workflow step against an engagement (only if authorized). Returns the run id or null. */
-    suspend fun recordRun(engagementId: Long, label: String, command: String, source: String = "tool", target: String = ""): Long? {
+    /**
+     * Records a launched tool/workflow step against an engagement (only if authorized). Returns the run
+     * id or null. When [outputPath] is set, the run is marked as capturing output into that file; the
+     * app can later [attachOutput] once VictorSuite has written it.
+     */
+    suspend fun recordRun(engagementId: Long, label: String, command: String, source: String = "tool", target: String = "", outputPath: String = ""): Long? {
         val e = db.engagements().get(engagementId) ?: return null
         if (!e.isAuthorized) return null
-        return db.toolRuns().insert(ToolRun(engagementId = engagementId, label = label, command = command, source = source, target = target, startedAt = clock()))
+        return db.toolRuns().insert(ToolRun(engagementId = engagementId, label = label, command = command, source = source, target = target, startedAt = clock(), outputPath = outputPath))
+    }
+
+    /** Set (or clear) the capture-file path on an existing run. */
+    suspend fun setRunOutputPath(runId: Long, path: String): Boolean {
+        val run = db.toolRuns().get(runId) ?: return false
+        db.toolRuns().update(run.copy(outputPath = path)); return true
+    }
+
+    /** Parse a captured log ([RunCapture]) and store its output + exit code on the run. Returns true if updated. */
+    suspend fun attachOutput(runId: Long, rawLog: String): Boolean {
+        val run = db.toolRuns().get(runId) ?: return false
+        val parsed = RunCapture.parse(rawLog)
+        db.toolRuns().update(run.copy(
+            output = parsed.output,
+            exitCode = parsed.exitCode,
+            finishedAt = if (parsed.finished) clock() else run.finishedAt,
+        ))
+        return true
+    }
+
+    /** Store output from a non-interactive Privilege.exec run directly (no capture file needed). */
+    suspend fun completeRunFromExec(runId: Long, result: ShellResult): Boolean {
+        val run = db.toolRuns().get(runId) ?: return false
+        db.toolRuns().update(run.copy(output = result.out.trimEnd(), exitCode = result.code, finishedAt = clock()))
+        return true
     }
 
     companion object {

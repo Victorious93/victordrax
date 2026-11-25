@@ -38,6 +38,28 @@ An Android app (Kotlin + Jetpack Compose) for setting up and driving the **ANDRA
 - **VNC desktop launcher**, Glance home-screen widgets, and a Shizuku wireless-debugging pairing helper.
 - **In-app manual:** More → Manual / Help, a searchable Markdown manual with deep links.
 
+## Run output capture
+
+Tool and workflow runs are recorded in the `tool_runs` table against an engagement. Because VictorSuite
+sessions are interactive, the launched command is wrapped so VictorSuite **tees stdout+stderr into a
+per-run log file** (under the shared folder in Settings → *Run output capture*, default
+`/sdcard/VictorDrax/runs`) and appends an exit sentinel. From **Findings → tool runs**, *Read output*
+imports the log directly (where storage access allows) or *Import .log* pulls it in via the Storage
+Access Framework; the run then shows its captured output and exit code, and a finding spawned from the
+run carries the real output as evidence. Non-interactive `Privilege.exec` runs are captured directly.
+The capture folder must be reachable by both apps on a real device.
+
+## Payload & listener builder
+
+More → **Payload & listener builder**. For **authorized testing only**, tied to an authorized
+engagement. Build an `msfvenom` payload (pick payload type, LHOST/LPORT, output format, optional stock
+encoder + iterations, output folder and filename) and the matching `exploit/multi/handler` listener,
+then hand each to VictorSuite. The builder only *generates* a payload and *starts a listener* for the
+operator's own test — it has **no** auto-deploy, spreading, persistence or evasion features. Every
+value is validated (payload/format allow-lists, LHOST, LPORT 1–65535, encoder/iterations, filename,
+absolute output path) and the launcher single-quote escapes each argv token. The payload build is
+recorded as a tool run and its output captured (see *Run output capture*).
+
 ## Screenshots
 
 Rendered headlessly with Robolectric (not on a device). All 19 screens are in [`docs/screenshots/`](docs/screenshots/).
