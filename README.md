@@ -1,78 +1,99 @@
+<div align="center">
+
+<img src="docs/brand/victordrax_logo_v3_dragon_1024.png" width="200" alt="VictorDrax logo"/>
+
 # VictorDrax
 
-An Android app (Kotlin + Jetpack Compose) that will help you set up and launch the
-**ANDRAX-NG** penetration-testing environment from
-[SNAKE Security](https://github.com/snakesec).
+**Set up and drive ANDRAX-NG on Android, with authorization and scope built in.**
 
-> ⚠️ **Authorized testing only.** Use this only on systems you own or have written
-> permission to test. The app makes you accept this notice on first launch, and it
-> stays visible in the About screen.
+<p>
+  <a href="https://github.com/Victorious93/victordrax/actions/workflows/android.yml"><img src="https://img.shields.io/github/actions/workflow/status/Victorious93/victordrax/android.yml?branch=main&style=flat-square&labelColor=0B0F1A&logo=githubactions&logoColor=00E5FF&label=CI" alt="CI"/></a>
+  <img src="https://img.shields.io/badge/license-Apache--2.0-FF2BD6?style=flat-square&labelColor=0B0F1A" alt="License"/>
+  <img src="https://img.shields.io/badge/platform-Android-00E5FF?style=flat-square&labelColor=0B0F1A" alt="Platform"/>
+  <a href="https://victorious-framework.pages.dev"><img src="https://img.shields.io/badge/Victorious-Framework-FF2BD6?style=flat-square&labelColor=0B0F1A" alt="Victorious Framework"/></a>
+</p>
 
-## What it does today (early preview)
-- **Status** – shows whether root (`su`) is detected, your CPU architecture, and free storage.
-- **Install environment** – explains the requirements and links to the official
-  upstream sources. *Automatic download/setup is not built yet (TODO).*
-- **Settings** – theme, install path, privilege mode (root / Shizuku / auto), Shizuku status, legal reset.
-- **About** – legal notice, credits, and license.
+<p><a href="https://victorious-framework.pages.dev">Victorious Framework</a></p>
 
-## Batch 2 features (v0.2.0)
+</div>
 
-All offensive actions are tied to an engagement with a recorded authorization (who authorized, date, document) and a scope; nothing runs against targets outside that scope.
+---
 
-- **Scan viewer** — import nmap XML (`-oX`, XXE-hardened parser), grepable (`-oG`), JSON or CSV into an engagement; sortable, filterable table with open-only and per-host filters.
-- **Workflows** — playbooks stored in Room, with `{variables}`. A run requires an authorized engagement and a target inside its scope; each step opens a VictorSuite session. Built-in passive/low-impact playbooks: Nmap service scan, Passive host recon (whois/dig), Top-ports TCP sweep.
-- **Report builder** — findings with severity and a CVSS 3.1 calculator (spec rounding), executive summary (auto or custom), branded neon PDF and Markdown export.
-- **afos-ng packages** — browse/search the bundled afos-ng catalog; install/update/list run `afos` inside the ANDRAX-NG chroot via VictorSuite (needs a real rooted device with the environment installed). Installed state is marked by pasting `afos -l` output.
-- **Encrypted backup/restore** — Storage Access Framework file, AES-256-GCM, key from PBKDF2-HMAC-SHA256 (210k iterations, random salt/IV). Restore can merge or replace. A wrong passphrase changes nothing.
+An Android app (Kotlin + Jetpack Compose) for setting up and driving the **ANDRAX-NG** penetration-testing environment from [SNAKE Security](https://github.com/snakesec): engagements with recorded authorization, scope-checked tool launches, scan import, findings and reports. Package id: `com.victorious.victordrax`, version 0.2.0.
 
-## In-app manual / help
+> ⚠️ **Authorized testing only.** Use this only on systems you own or have written permission to test. The app makes you accept this notice on first launch and keeps it visible in About. All offensive actions are tied to an engagement with a recorded authorization (who, date, document) and a scope; nothing runs against targets outside that scope.
 
-Every Victorious APK ships a full in-app how-to manual. Open it from **More → Manual / Help**. It has a searchable, sectioned table of contents and per-topic pages covering getting started, the legal/authorization model and scope, privilege modes, Shizuku + wireless debugging, the VictorSuite terminal, tools, engagements, findings, reports, the scan scheduler, the BeEF panel, afos-ng packages, the VNC desktop, backup/restore, the installer, and troubleshooting. Where useful a topic can deep-link straight to the relevant app screen. Content lives as Markdown in [`app/src/main/assets/manual/`](app/src/main/assets/manual/) with a `manifest.json`, parsed and searched by a pure (unit-tested) content model and rendered by a tiny built-in Markdown renderer — no extra libraries.
+## Features
 
-Screenshots (rendered headlessly with Robolectric, not on a device): [`docs/screenshots/`](docs/screenshots/). Logo: [`docs/brand/`](docs/brand/).
+- **Status and install:** shows root (`su`) detection, CPU architecture and free storage, explains the requirements and links the official upstream sources. *Fully automatic download and setup of ANDRAX-NG is **Planned**.*
+- **Engagements and scope:** authorization on record, scope validation and an argv-safe command launcher.
+- **Kali Top 10 tool screens:** forms for Nmap, sqlmap, THC Hydra, John the Ripper, Aircrack-ng and OWASP ZAP; a Metasploit resource builder; launch-only Burp Suite, Maltego and Wireshark in the VNC desktop. See [docs/top10-tools.md](docs/top10-tools.md).
+- **Scan viewer and network discovery:** import nmap XML (`-oX`, XXE-hardened), grepable (`-oG`), JSON or CSV; sortable, filterable tables and host cards with one-tap "create finding".
+- **Workflows:** playbooks with `{variables}` stored in Room; a run needs an authorized engagement and an in-scope target. Built in: Nmap service scan, passive host recon (whois/dig), top-ports TCP sweep.
+- **Scan scheduler:** WorkManager with a scope and authorization guard and notifications.
+- **Findings and reports:** status, tags, evidence and a CVSS 3.1 calculator; executive summary; branded PDF and Markdown export.
+- **BeEF-XSS control panel** and a **MITM proxy console** (`mitmdump` through VictorSuite, with flow import and filters), framed for your own authorized test traffic.
+- **afos-ng packages:** browse the bundled catalog and run `afos` install/update inside the ANDRAX-NG chroot via VictorSuite (needs a rooted device with the environment installed).
+- **Encrypted backup and restore:** AES-256-GCM with a PBKDF2-HMAC-SHA256 key (210k iterations); merge or replace; a wrong passphrase changes nothing.
+- **VNC desktop launcher**, Glance home-screen widgets, and a Shizuku wireless-debugging pairing helper.
+- **In-app manual:** More → Manual / Help, a searchable Markdown manual with deep links.
 
+## Screenshots
 
-## MITM / traffic proxy console
+Rendered headlessly with Robolectric (not on a device). All 19 screens are in [`docs/screenshots/`](docs/screenshots/).
 
-More → **MITM proxy console**. Start/stop `mitmdump` through VictorSuite on a chosen listen port, follow in-app CA-cert install steps for the device under test, then paste or import a flow dump (JSONL, JSON array, or mitmdump `--flow-detail` text). Filter by host/method/status, inspect headers/body previews, and create a finding from a flow. Config and captured flows live in separate DataStore files (not `tool_runs`). Framed for the operator's own authorized test traffic only — no credential-harvesting automation.
+<p align="center">
+  <img src="docs/screenshots/01_dashboard.png" width="150" alt="Dashboard"/>
+  <img src="docs/screenshots/02_tools.png" width="150" alt="Tools"/>
+  <img src="docs/screenshots/05_engagements.png" width="150" alt="Engagements"/>
+  <img src="docs/screenshots/07_report_builder.png" width="150" alt="Report builder"/>
+  <img src="docs/screenshots/09_scan_table.png" width="150" alt="Scan table"/>
+</p>
 
-## Network discovery dashboard
+## Install
 
-More → **Network discovery**. Pick an authorized engagement and an in-scope target, launch `nmap` with `-oX` through VictorSuite (profiles: quick top-ports, service/version, OS guess, scripts), then paste or import the XML. The dashboard shows hosts (up/down), open ports/services/versions and OS guess, with filters and a one-tap "create finding" that pre-fills the findings manager. Results are stored in a separate DataStore file (not `tool_runs` / Room).
+No release is published yet. Download the debug APK from the latest [Android CI run](https://github.com/Victorious93/victordrax/actions/workflows/android.yml) (`victordrax-debug-apk` artifact). minSdk 26. ANDRAX-NG chroot install and the VNC desktop need **uid 0**: Magisk `su`, or Shizuku via [Sui](https://github.com/RikkaApps/Sui).
 
-## Build it
-You need JDK 17 and the Android SDK (API 34).
+## Build from source
 
-```
+JDK 17 and the Android SDK (API 34).
+
+```bash
+git clone https://github.com/Victorious93/victordrax.git
+cd victordrax
 ./gradlew testDebugUnitTest assembleDebug
 ```
-The APK ends up in `app/build/outputs/apk/debug/`. Every push also builds it on
-GitHub Actions; download it from the run's **Artifacts** (`victordrax-debug-apk`).
 
-## Signing
-`keystore/debug.keystore` is a **debug-only** key (passwords `android`/`android`),
-committed so debug builds always share a signature. It is not secret and must never
-sign a release. No release keys or secrets are in this repo.
+The APK lands in `app/build/outputs/apk/debug/`. `keystore/debug.keystore` is a **debug-only** key (passwords `android`/`android`) committed so debug builds share one signature. It is not secret and must never sign a release. No release keys or secrets are in this repository.
 
-## Credits
-- ANDRAX – original by Weidsom Nascimento / The Cracker Technology
-- ANDRAX-NG – SNAKE Security
-- afos-ng – SNAKE Security, Apache-2.0
+## Privilege modes and permissions
 
-Not affiliated with SNAKE Security. Upstream files are linked, not copied — see
-[NOTICE](NOTICE) and [THIRD_PARTY.md](THIRD_PARTY.md).
-
-## Shizuku (optional)
-VictorDrax can use [Shizuku](https://shizuku.rikka.app/) as an elevated-shell backend when classic `su` is unavailable. Preference order in **Auto** mode: root → Shizuku → unprivileged. ANDRAX-NG chroot install / VNC still need **uid 0** (Magisk `su`, or Shizuku via [Sui](https://github.com/RikkaApps/Sui)). Shizuku itself is not bundled; install it separately and grant permission from Settings.
-
-Optional root module (Magisk/KernelSU/APatch) that mounts the chroot at boot: see [docs/root-module.md](docs/root-module.md).
-
-## License
-Our code is released under the **Apache License 2.0** (same as afos-ng). See [LICENSE](LICENSE).
+**Auto** mode prefers root, then [Shizuku](https://shizuku.rikka.app/) (an elevated-shell backend, not bundled; install it separately and grant permission in Settings), then unprivileged. Declared permissions: `INTERNET`, `ACCESS_NETWORK_STATE`, `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE` (data sync), `com.termux.permission.RUN_COMMAND` and `moe.shizuku.manager.permission.API_V23`.
 
 ## Terminal: VictorSuite
 
-This app has no built-in terminal. "Open terminal" and every tool launch open a session in
-[VictorSuite](https://github.com/Victorious93/VictorSuite) through its Termux-compatible `RUN_COMMAND` intent.
-When the ANDRAX-NG chroot is installed, the session enters it. If VictorSuite has not allowed external apps, this
-app opens VictorSuite and copies the command to the clipboard instead. See [docs/victorsuite-integration.md](docs/victorsuite-integration.md).
+VictorDrax has no built-in terminal. "Open terminal" and every tool launch open a session in [VictorSuite](https://github.com/Victorious93/VictorSuite) through its Termux-compatible `RUN_COMMAND` intent, entering the ANDRAX-NG chroot when installed. If VictorSuite has not allowed external apps, VictorDrax opens VictorSuite and copies the command to the clipboard instead. See [docs/victorsuite-integration.md](docs/victorsuite-integration.md).
+
+## Optional root module
+
+A small, optional universal flashable module for Magisk, KernelSU and APatch mounts the chroot at boot. The app works the same without it. See [docs/root-module.md](docs/root-module.md).
+
+## Credits
+
+ANDRAX by Weidsom Nascimento / The Cracker Technology. ANDRAX-NG and afos-ng (Apache-2.0) by SNAKE Security. Not affiliated with SNAKE Security. Upstream files are linked, not copied: see [NOTICE](NOTICE) and [THIRD_PARTY.md](THIRD_PARTY.md).
+
+---
+
+## Victorious fleet
+
+VictorDrax is part of the [Victorious Framework](https://victorious-framework.pages.dev), a family of Android and PC tools by Don Victor. **Every app works standalone; fleet integrations are optional** and never required.
+
+Related: [VictorSuite](https://github.com/Victorious93/VictorSuite) (terminal and Linux environment), [droidcommand-AI](https://github.com/Victorious93/droidcommand-AI) (fleet controller), [victorious-fleet](https://github.com/Victorious93/victorious-fleet) (index of all fleet apps). The full roster lives in [victorious-fleet](https://github.com/Victorious93/victorious-fleet), and live status is in [fleet-manifest](https://github.com/Victorious93/fleet-manifest).
+
+## Contributing
+
+Issues and pull requests are welcome. Keep changes focused, match the existing code style, never commit secrets or release keys, and keep any fleet integration optional so the app still works on its own. Open a PR against the default branch and wait for CI to pass.
+
+## License
+
+Our code is released under the **Apache License 2.0** (the same as afos-ng); see [LICENSE](LICENSE). Upstream attributions are in [NOTICE](NOTICE) and [THIRD_PARTY.md](THIRD_PARTY.md).
