@@ -1,0 +1,3 @@
+{"method":"GET","scheme":"https","host":"api.lab.local","path":"/v1/health","status":200,"content_type":"application/json","request_headers":"Host: api.lab.local\nAccept: */*","response_headers":"Content-Type: application/json\nContent-Length: 15","request_body":"","response_body":"{\"ok\":true}"}
+{"method":"POST","scheme":"https","host":"api.lab.local","path":"/v1/login","status":401,"content_type":"application/json","request_headers":"Host: api.lab.local\nContent-Type: application/json","response_headers":"Content-Type: application/json","request_body":"{\"user\":\"demo\"}","response_body":"{\"error\":\"unauthorized\"}"}
+{"method":"GET","scheme":"http","host":"static.lab.local","path":"/logo.png","status":200,"content_type":"image/png"}

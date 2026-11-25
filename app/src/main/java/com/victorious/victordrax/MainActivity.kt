@@ -46,6 +46,7 @@ import com.victorious.victordrax.afos.AfosScreen
 import com.victorious.victordrax.backup.BackupScreen
 import com.victorious.victordrax.beef.BeefScreen
 import com.victorious.victordrax.manual.ManualScreen
+import com.victorious.victordrax.mitm.MitmScreen
 import com.victorious.victordrax.network.NetworkScreen
 import com.victorious.victordrax.report.ReportBuilderScreen
 import com.victorious.victordrax.findings.FindingsScreen
@@ -121,7 +122,7 @@ fun AppShell(settings: Settings, repo: SettingsRepo, prefs: Prefs, pendingRoute:
     fun go(route: String) = nav.navigate(route) { launchSingleTop = true; popUpTo("dashboard") { saveState = true }; restoreState = true }
     LaunchedEffect(pendingRoute.value) { pendingRoute.value?.let { go(it); pendingRoute.value = null } }
     val selected = primaryDests.firstOrNull { current?.startsWith(it.route) == true }?.route
-        ?: if (current in listOf("install", "desktop", "settings", "about", "workflows", "packages", "backup", "beef", "manual", "schedules", "wireless", "network") || current?.startsWith("playbook/") == true) "more" else if (current?.startsWith("tool/") == true) "tools"
+        ?: if (current in listOf("install", "desktop", "settings", "about", "workflows", "packages", "backup", "beef", "manual", "mitm", "schedules", "wireless", "network") || current?.startsWith("playbook/") == true) "more" else if (current?.startsWith("tool/") == true) "tools"
         else if (current?.startsWith("engagement/") == true || current?.startsWith("scan/") == true) "engagements" else null
 
     BoxWithConstraints {
@@ -186,6 +187,7 @@ private fun Host(nav: NavHostController, settings: Settings, repo: SettingsRepo,
         composable("backup") { BackupScreen() }
         composable("beef") { BeefScreen(settings) }
         composable("manual") { ManualScreen(settings, go) }
+        composable("mitm") { MitmScreen(settings) }
         composable("network") { NetworkScreen(settings) }
         composable("more") { MoreScreen(go) }
         composable("install") { InstallScreen(settings, repo) }
@@ -206,6 +208,7 @@ fun MoreScreen(go: (String) -> Unit) {
             Triple("Backup & restore", Icons.Default.Lock, "backup"),
             Triple("BeEF-XSS control panel", Icons.Default.BugReport, "beef"),
             Triple("Manual / Help", Icons.Default.MenuBook, "manual"),
+            Triple("MITM proxy console", Icons.Default.SwapHoriz, "mitm"),
             Triple("Network discovery", Icons.Default.TravelExplore, "network"),
             Triple("Settings", Icons.Default.Settings, "settings"), Triple("About & legal", Icons.Default.Info, "about"))
             .forEach { (l, i, r) -> QuickTile(l, i, Modifier.fillMaxWidth()) { go(r) } }
